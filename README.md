@@ -30,10 +30,21 @@ Most of data-centers enable DSA.
 
 ```bash
 sudo accel-config load-config -c setup/contention_profile.conf -e
+# or
+sudo ./setup/setup_dsa.sh setup/some_profile.conf
+
 sudo chmod 766 /dev/dsa/*
+```
+
+(Optional) Well, it's a bit of annoying that Linux enables capabilities by default, so
+the `mmap` to DSA portal may failed. We give `cap_sys_rawio` to our "trusted" binaries
+
+```
+sudo setcap cap_sys_rawio+ep ./build/* # or other binaries
 ```
 
 ## Reference
 
 - Intel(R) Data Streaming Accelerator User Guide
+- Intel(R) Data Streaming Accelerator Architecuture Specification
 - https://github.com/intel/dsa-perf-micros 
