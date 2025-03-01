@@ -1,6 +1,4 @@
-#include "util.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include "dsa.h"
 
 #define BLEN 4096
 #define TEST_NUM 10

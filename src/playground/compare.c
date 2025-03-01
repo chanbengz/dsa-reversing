@@ -1,30 +1,51 @@
-#include "util.h"
+#define _GNU_SOURCE
+
+#include "dsa.h"
+#include <sys/sysinfo.h>
+#include <pthread.h>
+#include <sched.h>
 
 #define BLEN 4096
 #define TEST_NUM 10
 
+int cpu_pin(uint32_t cpu)
+{
+	cpu_set_t *cpuset;
+	size_t cpusetsize;
+
+	cpusetsize = CPU_ALLOC_SIZE(get_nprocs());
+	cpuset = CPU_ALLOC(get_nprocs());
+	CPU_ZERO_S(cpusetsize, cpuset);
+	CPU_SET_S(cpu, cpusetsize, cpuset);
+
+	pthread_setaffinity_np(pthread_self(), cpusetsize, cpuset);
+
+	CPU_FREE(cpuset);
+
+	return 0;
+}
+
 
 int main(int argc, char *argv[])
 {
-    char src[BLEN], dst[BLEN];
+    cpu_pin(118);
+    char src[BLEN], dst[BLEN], result, randbyte;
     srand(0LL);
 
-    for (int i = 0; i < 2; i++) {
-        printf("identical\n");
-        char randbyte = rand() % 128;
-        memset(src, randbyte, BLEN);
-        memset(dst, randbyte, BLEN);
+    printf("not identical\n");
+    randbyte = rand() % 128;
+    memset(src, randbyte, BLEN >> 1);
+    memset(src + (BLEN >> 1), rand() % 128, BLEN >> 1);
+    memset(dst, randbyte, BLEN);
 
-        int result = submit_wd(src, dst);
+    result = submit_wd(src, dst);
 
-        printf("not identical\n");
-        randbyte = rand() % 128;
-        memset(src, randbyte, BLEN >> 1);
-        memset(src + (BLEN >> 1), rand() % 128, BLEN >> 1);
-        memset(dst, randbyte, BLEN);
+    printf("identical\n");
+    randbyte = rand() % 128;
+    memset(src, randbyte, BLEN);
+    memset(dst, randbyte, BLEN);
 
-        result = submit_wd(src, dst);
-    }
+    result = submit_wd(src, dst);
 
     return 0;
 }
@@ -54,10 +75,9 @@ int submit_wd(void* src, void *dst) {
     desc.flags |= IDXD_OP_FLAG_RCR;
     /* CRAV should be 1 since RCR = 1 */
     desc.flags |= IDXD_OP_FLAG_CRAV;
-    /* Hint to direct data writes to CPU cache */
-    // desc.flags |= IDXD_OP_FLAG_CC;
+    /* Hint to check result if they're identical */
     desc.flags |= IDXD_OP_FLAG_CR;
-    desc.xfer_size = BLEN >> 4;
+    desc.xfer_size = BLEN;
     desc.src_addr = (uintptr_t) src;
     desc.src2_addr = (uintptr_t) dst;
     desc.expected_res = 0;
@@ -95,6 +115,7 @@ retry:
             goto retry;
         } else {
             printf("bytes different at %d\n", comp.bytes_completed);
+           
             rc = EXIT_FAILURE;
         }
     } else {

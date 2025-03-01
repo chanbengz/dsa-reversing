@@ -19,6 +19,8 @@ struct wq_info {
     int wq_fd;
 };
 
+int submit_wd(void* src, void *dst);
+
 static inline int enqcmd(volatile void *reg, struct dsa_hw_desc *desc)
 {
     uint8_t retry;
@@ -109,8 +111,6 @@ static int map_wq(struct wq_info *wq_info)
     wq_info->wq_fd = -1;
     return 0;
 }
-
-int submit_wd(void* src, void *dst);
 
 static __always_inline uint64_t rdtsc() {
     uint64_t a, d;
