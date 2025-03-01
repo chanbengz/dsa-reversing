@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -7,10 +8,10 @@
 #include <sys/types.h>
 #include <linux/idxd.h>
 #include <xmmintrin.h>
+#include <x86intrin.h>
 #include <accel-config/libaccel_config.h>
 
 #define NOP_RETRY 10000
-#define BLEN 4096
 
 struct wq_info {
     bool wq_mapped;
@@ -111,34 +112,33 @@ static int map_wq(struct wq_info *wq_info)
 
 int submit_wd(void* src, void *dst);
 
-uint64_t rdtsc_begin() {
-  uint64_t a, d;
-  asm volatile ("mfence\n\t"
-    "CPUID\n\t"
-    "RDTSCP\n\t"
-    "mov %%rdx, %0\n\t"
-    "mov %%rax, %1\n\t"
-    "mfence\n\t"
-    : "=r" (d), "=r" (a)
-    :
-    : "%rax", "%rbx", "%rcx", "%rdx");
-  a = (d<<32) | a;
-  return a;
+static __always_inline uint64_t rdtsc() {
+    uint64_t a, d;
+    asm volatile("mfence");
+    asm volatile("rdtscp" : "=a"(a), "=d"(d) :: "rcx");
+    a = (d << 32) | a;
+    asm volatile("mfence");
+    return a;
 }
 
-uint64_t rdtsc_end() {
-  uint64_t a, d;
-  asm volatile("mfence\n\t"
-    "RDTSCP\n\t"
-    "mov %%rdx, %0\n\t"
-    "mov %%rax, %1\n\t"
-    "CPUID\n\t"
-    "mfence\n\t"
-    : "=r" (d), "=r" (a)
-    :
-    : "%rax", "%rbx", "%rcx", "%rdx");
-  a = (d<<32) | a;
-  return a;
+static __always_inline void flush(void *p) {
+    asm volatile("clflush 0(%0)\n" : : "c"(p) : "rax");
 }
 
-void flush(void *p) { asm volatile("clflush 0(%0)\n" : : "c"(p) : "rax"); }
+static __always_inline void umonitor(const volatile void *addr)
+{
+    asm volatile(".byte 0xf3, 0x48, 0x0f, 0xae, 0xf0" : : "a"(addr));
+}
+
+static __always_inline int umwait(unsigned long timeout, unsigned int state)
+{
+    uint8_t r;
+    uint32_t timeout_low = (uint32_t)timeout;
+    uint32_t timeout_high = (uint32_t)(timeout >> 32);
+
+    asm volatile(".byte 0xf2, 0x48, 0x0f, 0xae, 0xf1\t\n"
+                 "setc %0\t\n"
+                 : "=r"(r)
+                 : "c"(state), "a"(timeout_low), "d"(timeout_high));
+    return r;
+}

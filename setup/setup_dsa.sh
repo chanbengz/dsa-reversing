@@ -1,9 +1,6 @@
 #!/bin/bash
 
-# TODO: use accel-config to replace instances of `cat sysfs path`
-
 num_dsa=`ls /sys/bus/dsa/devices/  | grep dsa | wc -l`
-
 
 script=`basename $0`
 
@@ -138,6 +135,8 @@ bind() {
 	do
 		[[ `cat /sys/bus/dsa/devices/$dname/wq$d\.$i/size` -ne "0" ]] && accel-config enable-wq $dname/wq$d\.$i
 	done
+
+  chmod -R a+r+w /dev/dsa/*
 }
 
 do_config_file() {

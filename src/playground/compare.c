@@ -1,12 +1,30 @@
 #include "util.h"
 
+#define BLEN 4096
+#define TEST_NUM 10
+
 
 int main(int argc, char *argv[])
 {
     char src[BLEN], dst[BLEN];
-    memset(src, 0x41, BLEN);
-    int result = submit_wd(src, dst);
-    if (!result) for (int i = 0; i < 16; i++) printf("%c", dst[i]);
+    srand(0LL);
+
+    for (int i = 0; i < 2; i++) {
+        printf("identical\n");
+        char randbyte = rand() % 128;
+        memset(src, randbyte, BLEN);
+        memset(dst, randbyte, BLEN);
+
+        int result = submit_wd(src, dst);
+
+        printf("not identical\n");
+        randbyte = rand() % 128;
+        memset(src, randbyte, BLEN >> 1);
+        memset(src + (BLEN >> 1), rand() % 128, BLEN >> 1);
+        memset(dst, randbyte, BLEN);
+
+        result = submit_wd(src, dst);
+    }
 
     return 0;
 }
@@ -15,9 +33,11 @@ int main(int argc, char *argv[])
  * flush wq non-blocking
  *
  */
+
 int submit_wd(void* src, void *dst) {
-    struct dsa_hw_desc desc = { };
-    struct dsa_completion_record comp __attribute__((aligned(32)));
+    /*printf("src: %p, dst: %p, char: %c\n", src, dst, *(char *)src);*/
+    struct dsa_hw_desc desc = {};
+    struct dsa_completion_record comp __attribute__((aligned(32))) = {};
     uint32_t tlen;
     int rc;
 
@@ -25,8 +45,7 @@ int submit_wd(void* src, void *dst) {
     rc = map_wq(&wq_info);
     if (rc) return EXIT_FAILURE;
 
-    memset(src, 0x41, BLEN);
-    desc.opcode = DSA_OPCODE_MEMMOVE;
+    desc.opcode = DSA_OPCODE_COMPARE;
     /*
     * Request a completion – since we poll on status, this flag
     * needs to be 1 for status to be updated on successful
@@ -36,23 +55,34 @@ int submit_wd(void* src, void *dst) {
     /* CRAV should be 1 since RCR = 1 */
     desc.flags |= IDXD_OP_FLAG_CRAV;
     /* Hint to direct data writes to CPU cache */
-    desc.flags |= IDXD_OP_FLAG_CC;
-    desc.xfer_size = BLEN;
+    // desc.flags |= IDXD_OP_FLAG_CC;
+    desc.flags |= IDXD_OP_FLAG_CR;
+    desc.xfer_size = BLEN >> 4;
     desc.src_addr = (uintptr_t) src;
-    desc.dst_addr = (uintptr_t) dst;
+    desc.src2_addr = (uintptr_t) dst;
+    desc.expected_res = 0;
     desc.completion_addr = (uintptr_t)&comp;
 
 retry:
     if (wq_info.wq_mapped) {
-        printf("ENQCMD\n");
         submit_desc(wq_info.wq_portal, &desc);
     } else {
-        printf("SYSCALL\n");
         int rc = write(wq_info.wq_fd, &desc, sizeof(desc));
         if (rc != sizeof(desc))
         return EXIT_FAILURE;
     }
-    while (comp.status == 0) _mm_pause();
+    
+    _mm_mfence();
+    uint64_t start = __rdtsc();
+    _mm_mfence();
+    // polling for completion
+    while (comp.status == 0);
+    _mm_mfence();
+    uint64_t end = __rdtsc();
+    _mm_mfence();
+
+    printf("time elapsed: %ld\n", end - start);
+
     if (comp.status != DSA_COMP_SUCCESS) {
         if (op_status(comp.status) == DSA_COMP_PAGE_FAULT_NOBOF) {
             int wr = comp.status & DSA_COMP_STATUS_WRITE;
@@ -64,14 +94,11 @@ retry:
             desc.xfer_size -= comp.bytes_completed;
             goto retry;
         } else {
-            printf("desc failed status %u\n", comp.status);
+            printf("bytes different at %d\n", comp.bytes_completed);
             rc = EXIT_FAILURE;
         }
     } else {
-        printf("desc successful\n");
-        rc = memcmp(src, dst, BLEN);
-        rc ? printf("memmove failed\n") : printf("memmove successful\n");
-        rc = rc ? EXIT_FAILURE : EXIT_SUCCESS;
+        rc = EXIT_SUCCESS;
     }
 
     return rc;
