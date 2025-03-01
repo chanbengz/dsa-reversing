@@ -1,8 +1,11 @@
 #include "dsa.h"
+#include <stdint.h>
+#include <stdio.h>
 
-#define BLEN 4096
+#define BLEN (4096 << 0)
 #define TEST_NUM 10
 
+uint64_t total_cycles = 0;
 
 int main(int argc, char *argv[])
 {
@@ -10,35 +13,31 @@ int main(int argc, char *argv[])
     char dst[BLEN * TEST_NUM];
     for (int i = 0; i < TEST_NUM; i++) memset(src + i * BLEN, 0x41 + i, BLEN);
 
-    for (int i = 0; i < TEST_NUM; i++) {
-        int result = submit_wd(src + i * BLEN, dst + i * BLEN);
+    // skip the first, since it results in TLB miss
+    submit_wd(src, dst);
+    total_cycles = 0;
+
+    for (int i = 1; i < TEST_NUM; i++) {
+        int result = submit_wd(src + (BLEN << 1), dst + i * BLEN);
         if (result) return 1;
-    } 
+    }
+
+    printf("BLEN: %d\n", BLEN);
+    printf("avg cycles: %f\n", (double) total_cycles / (double) (TEST_NUM - 1));
 
     return 0;
 }
 
-/*
- * flush wq non-blocking
- *
- */
-
 static inline void submit_desc_check(void *wq_portal, struct dsa_hw_desc *hw)
 {
-    _mm_mfence();
-    uint64_t start = __rdtsc();
-    _mm_mfence();
     int result = enqcmd(wq_portal, hw);
-    _mm_mfence();
-    uint64_t end = __rdtsc();
-    _mm_mfence();
-    printf("enqcmd time: %ld\n", end - start);
     if (!result) return;
+
     while (enqcmd(wq_portal, hw)) { printf("Enq failed\n"); _mm_pause(); }
 }
 
 int submit_wd(void* src, void *dst) {
-    printf("src: %p, dst: %p, char: %c\n", src, dst, *(char *)src);
+    /*printf("src: %p, dst: %p, char: %c\n", src, dst, *(char *)src);*/
     struct dsa_hw_desc desc = {};
     struct dsa_completion_record comp __attribute__((aligned(32))) = {};
     uint32_t tlen;
@@ -58,7 +57,7 @@ int submit_wd(void* src, void *dst) {
     /* CRAV should be 1 since RCR = 1 */
     desc.flags |= IDXD_OP_FLAG_CRAV;
     /* Hint to direct data writes to CPU cache */
-    // desc.flags |= IDXD_OP_FLAG_CC;
+    desc.flags |= IDXD_OP_FLAG_CC;
     desc.xfer_size = BLEN;
     desc.src_addr = (uintptr_t) src;
     desc.dst_addr = (uintptr_t) dst;
@@ -74,7 +73,11 @@ retry:
     }
     
     // polling for completion
+    uint64_t start = rdtsc();
     while (comp.status == 0);
+    uint64_t end = rdtsc();
+    total_cycles += end - start;
+    printf("execution time: %ld\n", end - start);
 
     if (comp.status != DSA_COMP_SUCCESS) {
         if (op_status(comp.status) == DSA_COMP_PAGE_FAULT_NOBOF) {
@@ -92,7 +95,7 @@ retry:
         }
     } else {
         rc = memcmp(src, dst, BLEN);
-        rc ? printf("memmove failed\n") : printf("memmove successful\n");
+        /*rc ? printf("memmove failed\n") : printf("memmove successful\n");*/
         rc = rc ? EXIT_FAILURE : EXIT_SUCCESS;
     }
 
