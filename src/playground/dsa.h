@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <sys/cdefs.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -12,6 +13,10 @@
 #include <accel-config/libaccel_config.h>
 
 #define NOP_RETRY 10000
+#define MAX_COMP_RETRY 2000000000
+#define UMWAIT_DELAY 100000
+#define UMWAIT_STATE_C0_2 0
+#define UMWAIT_STATE_C0_1 1
 
 struct wq_info {
     bool wq_mapped;
@@ -125,20 +130,18 @@ static __always_inline void flush(void *p) {
     asm volatile("clflush 0(%0)\n" : : "c"(p) : "rax");
 }
 
-static __always_inline void umonitor(const volatile void *addr)
-{
-    asm volatile(".byte 0xf3, 0x48, 0x0f, 0xae, 0xf0" : : "a"(addr));
+static __always_inline void umonitor(void *addr) {
+  asm volatile(".byte 0xf3, 0x48, 0x0f, 0xae, 0xf0" : : "a"(addr));
 }
 
-static __always_inline int umwait(unsigned long timeout, unsigned int state)
-{
-    uint8_t r;
-    uint32_t timeout_low = (uint32_t)timeout;
-    uint32_t timeout_high = (uint32_t)(timeout >> 32);
-
-    asm volatile(".byte 0xf2, 0x48, 0x0f, 0xae, 0xf1\t\n"
-                 "setc %0\t\n"
-                 : "=r"(r)
-                 : "c"(state), "a"(timeout_low), "d"(timeout_high));
-    return r;
+static __always_inline unsigned char
+umwait(unsigned int state, unsigned long long timeout) {
+  uint8_t r;
+  uint32_t timeout_low = (uint32_t)timeout;
+  uint32_t timeout_high = (uint32_t)(timeout >> 32);
+  asm volatile(".byte 0xf2, 0x48, 0x0f, 0xae, 0xf1\t\n"
+    "setc %0\t\n" :
+    "=r"(r) :
+    "c"(state), "a"(timeout_low), "d"(timeout_high));
+  return r;
 }

@@ -4,6 +4,7 @@
 
 #define BLEN (4096 << 0)
 #define TEST_NUM 10
+#define USE_UMWAIT
 
 uint64_t total_cycles = 0;
 
@@ -23,7 +24,7 @@ int main(int argc, char *argv[])
     }
 
     printf("BLEN: %d\n", BLEN);
-    printf("avg cycles: %f\n", (double) total_cycles / (double) (TEST_NUM - 1));
+    printf("Avg cycles: %f\n", (double) total_cycles / (double) (TEST_NUM - 1));
 
     return 0;
 }
@@ -74,7 +75,20 @@ retry:
     
     // polling for completion
     uint64_t start = rdtsc();
+
+#ifndef USE_UMWAIT
     while (comp.status == 0);
+#else
+    int retry = 0;
+    while (comp.status == 0 && retry++ < MAX_COMP_RETRY) {
+        umonitor(&comp);
+        if (comp.status == 0) {
+            uint64_t delay = rdtsc() + UMWAIT_DELAY;
+            umwait(UMWAIT_STATE_C0_1, delay);
+        }
+    }
+#endif
+
     uint64_t end = rdtsc();
     total_cycles += end - start;
     printf("execution time: %ld\n", end - start);

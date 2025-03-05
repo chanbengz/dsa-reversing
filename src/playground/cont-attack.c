@@ -1,6 +1,6 @@
 #include "dsa.h"
 
-#define BLEN 4096
+#define BLEN (4096 << 4)
 #define TEST_NUM 5
 
 struct wq_info wq_info;
@@ -24,9 +24,8 @@ int main(int argc, char *argv[])
     desc.dst_addr = (uintptr_t) dst;
     desc.completion_addr = (uintptr_t)&comp;
 
-    printf("Attack start\n");
+    printf("[x] Attack start...\n");
 
-    fork();
     fork();
     for(;;) {
         enqcmd(wq_info.wq_portal, &desc);
