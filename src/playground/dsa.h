@@ -145,4 +145,4 @@ umwait(unsigned int state, unsigned long long timeout) {
     return r;
 }
 
-inline int submit_wd(void*, void*);
+int submit_wd(void*, void*);

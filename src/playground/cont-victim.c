@@ -2,22 +2,25 @@
 #include <stdio.h>
 
 #define BLEN (4096 << 0)
-#define TEST_NUM 2
+#define TEST_NUM 8
 
 uint64_t fails = 0;
+struct wq_info wq_info;
 
 int main(int argc, char *argv[])
 {
     printf("[victim] starts, BLEN: %d\n", BLEN);
-    char* src = malloc(BLEN * TEST_NUM * sizeof(char));
-    char* dst = malloc(BLEN * TEST_NUM * sizeof(char));
-    for (int i = 0; i < TEST_NUM; i++) memset(src + i * BLEN, 0x41 + i, BLEN);
+    char *src = malloc(BLEN), *dst = malloc(BLEN);
+    srand(114514LL);
+
+    int rc = map_wq(&wq_info);
+    if (rc) return EXIT_FAILURE;
 
     for (int i = 0; i < TEST_NUM; i++) {
-        fails = 0;
-        int result = submit_wd(src + (BLEN << 1), dst + i * BLEN);
-        if (fails) printf("[victim] Submission failures: %ld\n", fails);
-        if (result) return 1;
+        fails = 0; memset(src, rand(), BLEN);
+        int result = submit_wd(src, dst);
+        fails ? printf("[victim] Submission failures: %ld\n", fails) \
+              : printf("[victim] Submission successful\n");
     }
 
     return 0;
@@ -28,16 +31,13 @@ static inline void submit_desc_check(void *wq_portal, struct dsa_hw_desc *hw)
     while (enqcmd(wq_portal, hw)) fails++; 
 }
 
-inline int submit_wd(void* src, void *dst) {
+int submit_wd(void* src, void *dst) {
     /*printf("src: %p, dst: %p, char: %c\n", src, dst, *(char *)src);*/
-    struct wq_info wq_info;
+    int rc;
     struct dsa_hw_desc desc = {};
     struct dsa_completion_record comp __attribute__((aligned(32))) = {};
-    uint32_t tlen, rc;
-
-    rc = map_wq(&wq_info);
-    if (rc) return EXIT_FAILURE;
-
+    
+    // prepare descriptor
     desc.opcode = DSA_OPCODE_MEMMOVE;
     desc.flags = IDXD_OP_FLAG_RCR  \
                | IDXD_OP_FLAG_CRAV \
@@ -45,7 +45,7 @@ inline int submit_wd(void* src, void *dst) {
     desc.xfer_size = BLEN;
     desc.src_addr = (uintptr_t) src;
     desc.dst_addr = (uintptr_t) dst;
-    desc.completion_addr = (uintptr_t)&comp;
+    desc.completion_addr = (uintptr_t) &comp;
 
 retry:
     if (wq_info.wq_mapped) {
@@ -82,7 +82,7 @@ retry:
         }
     } else {
         rc = memcmp(src, dst, BLEN);
-        /*rc ? printf("memmove failed\n") : printf("memmove successful\n");*/
+        /*rc ? printf("memmove failed: %d\n", rc) : printf("memmove successful\n");*/
         rc = rc ? EXIT_FAILURE : EXIT_SUCCESS;
     }
 
