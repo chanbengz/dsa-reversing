@@ -1,47 +1,56 @@
 #include "dsa.h"
+#include <stdint.h>
 #include <stdio.h>
 
 #define BLEN (4096 << 0)
-#define TEST_NUM 2
+#define TEST_NUM 10
 
-uint64_t fails = 0;
+uint64_t total_cycles = 0;
 
 int main(int argc, char *argv[])
 {
-    printf("[victim] starts, BLEN: %d\n", BLEN);
-    char* src = malloc(BLEN * TEST_NUM * sizeof(char));
-    char* dst = malloc(BLEN * TEST_NUM * sizeof(char));
+    char src[BLEN * TEST_NUM];
+    char dst[BLEN * TEST_NUM];
     for (int i = 0; i < TEST_NUM; i++) memset(src + i * BLEN, 0x41 + i, BLEN);
 
-    for (int i = 0; i < TEST_NUM; i++) {
-        fails = 0;
+    // skip the first, since it results in TLB miss
+    submit_wd(src, dst);
+    total_cycles = 0;
+
+    for (int i = 1; i < TEST_NUM; i++) {
         int result = submit_wd(src + (BLEN << 1), dst + i * BLEN);
-        if (fails) printf("[victim] Submission failures: %ld\n", fails);
         if (result) return 1;
     }
+
+    printf("BLEN: %d\n", BLEN);
+    printf("avg cycles: %f\n", (double) total_cycles / (double) (TEST_NUM - 1));
 
     return 0;
 }
 
 static inline void submit_desc_check(void *wq_portal, struct dsa_hw_desc *hw)
 {
-    while (enqcmd(wq_portal, hw)) fails++; 
+    int result = enqcmd(wq_portal, hw);
+    if (!result) return;
+
+    while (enqcmd(wq_portal, hw)) { printf("Enq failed\n"); _mm_pause(); }
 }
 
-inline int submit_wd(void* src, void *dst) {
+int submit_wd(void* src, void *dst) {
     /*printf("src: %p, dst: %p, char: %c\n", src, dst, *(char *)src);*/
-    struct wq_info wq_info;
     struct dsa_hw_desc desc = {};
     struct dsa_completion_record comp __attribute__((aligned(32))) = {};
-    uint32_t tlen, rc;
+    uint32_t tlen;
+    int rc;
 
+    struct wq_info wq_info;
     rc = map_wq(&wq_info);
     if (rc) return EXIT_FAILURE;
 
     desc.opcode = DSA_OPCODE_MEMMOVE;
-    desc.flags = IDXD_OP_FLAG_RCR  \
-               | IDXD_OP_FLAG_CRAV \
-               | IDXD_OP_FLAG_CC;
+    desc.flags |= IDXD_OP_FLAG_RCR;
+    desc.flags |= IDXD_OP_FLAG_CRAV;
+    desc.flags |= IDXD_OP_FLAG_CC;
     desc.xfer_size = BLEN;
     desc.src_addr = (uintptr_t) src;
     desc.dst_addr = (uintptr_t) dst;
@@ -56,18 +65,15 @@ retry:
         return EXIT_FAILURE;
     }
     
-    int retry = 0;
-    while (comp.status == 0 && retry++ < MAX_COMP_RETRY) {
-        umonitor(&comp);
-        if (comp.status == 0) {
-            uint64_t delay = rdtsc() + UMWAIT_DELAY;
-            umwait(UMWAIT_STATE_C0_1, delay);
-        }
-    }
+    // polling for completion
+    uint64_t start = rdtsc();
+    while (comp.status == 0);
+    uint64_t end = rdtsc();
+    total_cycles += end - start;
+    printf("execution time: %ld\n", end - start);
 
     if (comp.status != DSA_COMP_SUCCESS) {
         if (op_status(comp.status) == DSA_COMP_PAGE_FAULT_NOBOF) {
-            // continue to finish the rest
             int wr = comp.status & DSA_COMP_STATUS_WRITE;
             volatile char *t;
             t = (char *)comp.fault_addr;
@@ -77,7 +83,7 @@ retry:
             desc.xfer_size -= comp.bytes_completed;
             goto retry;
         } else {
-            printf("[error] desc failed status %u\n", comp.status);
+            printf("desc failed status %u\n", comp.status);
             rc = EXIT_FAILURE;
         }
     } else {

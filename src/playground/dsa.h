@@ -24,8 +24,6 @@ struct wq_info {
     int wq_fd;
 };
 
-int submit_wd(void* src, void *dst);
-
 static inline int enqcmd(volatile void *reg, struct dsa_hw_desc *desc)
 {
     uint8_t retry;
@@ -117,13 +115,12 @@ static int map_wq(struct wq_info *wq_info)
     return 0;
 }
 
-static __always_inline uint64_t rdtsc() {
-    uint64_t a, d;
-    asm volatile("mfence");
-    asm volatile("rdtscp" : "=a"(a), "=d"(d) :: "rcx");
-    a = (d << 32) | a;
-    asm volatile("mfence");
-    return a;
+static __always_inline uint64_t rdtsc(void) {
+    uint64_t tsc;
+    unsigned int dummy;
+    tsc = __rdtscp(&dummy);
+    __builtin_ia32_lfence();
+    return tsc;
 }
 
 static __always_inline void flush(void *p) {
@@ -131,17 +128,21 @@ static __always_inline void flush(void *p) {
 }
 
 static __always_inline void umonitor(void *addr) {
-  asm volatile(".byte 0xf3, 0x48, 0x0f, 0xae, 0xf0" : : "a"(addr));
+    asm volatile(".byte 0xf3, 0x48, 0x0f, 0xae, 0xf0" : : "a"(addr));
 }
 
 static __always_inline unsigned char
 umwait(unsigned int state, unsigned long long timeout) {
-  uint8_t r;
-  uint32_t timeout_low = (uint32_t)timeout;
-  uint32_t timeout_high = (uint32_t)(timeout >> 32);
-  asm volatile(".byte 0xf2, 0x48, 0x0f, 0xae, 0xf1\t\n"
-    "setc %0\t\n" :
-    "=r"(r) :
-    "c"(state), "a"(timeout_low), "d"(timeout_high));
-  return r;
+    uint8_t r;
+    uint32_t timeout_low = (uint32_t)timeout;
+    uint32_t timeout_high = (uint32_t)(timeout >> 32);
+    asm volatile(
+        ".byte 0xf2, 0x48, 0x0f, 0xae, 0xf1\t\n"
+        "setc %0\t\n" :
+        "=r"(r) :
+        "c"(state), "a"(timeout_low), "d"(timeout_high)
+    );
+    return r;
 }
+
+inline int submit_wd(void*, void*);

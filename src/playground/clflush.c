@@ -19,11 +19,6 @@ int main(int argc, char *argv[])
     return result;
 }
 
-/*
- * flush wq non-blocking
- *
- */
-
 int submit_wd(void* src, void *dst) {
     /*printf("src: %p, dst: %p, char: %c\n", src, dst, *(char *)src);*/
     struct dsa_hw_desc desc = {};
@@ -35,20 +30,11 @@ int submit_wd(void* src, void *dst) {
     if (rc) return EXIT_FAILURE;
 
     desc.opcode = DSA_OPCODE_COMPARE;
-    /*
-    * Request a completion – since we poll on status, this flag
-    * needs to be 1 for status to be updated on successful
-    * completion
-    */
     desc.flags |= IDXD_OP_FLAG_RCR;
-    /* CRAV should be 1 since RCR = 1 */
     desc.flags |= IDXD_OP_FLAG_CRAV;
-    /* Hint to direct data writes to CPU cache */
     // desc.flags |= IDXD_OP_FLAG_CC;
     desc.xfer_size = *(int *)dst;
     desc.dst_addr = (uintptr_t) src;
-
-    /* Completion record addr */
     desc.completion_addr = (uintptr_t)&comp;
 
 retry:

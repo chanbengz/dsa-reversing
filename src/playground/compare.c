@@ -59,23 +59,15 @@ int submit_wd(void* src, void *dst) {
     /*printf("src: %p, dst: %p, char: %c\n", src, dst, *(char *)src);*/
     struct dsa_hw_desc desc = {};
     struct dsa_completion_record comp __attribute__((aligned(32))) = {};
-    uint32_t tlen;
-    int rc;
+    uint32_t tlen, rc;
 
     struct wq_info wq_info;
     rc = map_wq(&wq_info);
     if (rc) return EXIT_FAILURE;
 
     desc.opcode = DSA_OPCODE_COMPARE;
-    /*
-    * Request a completion – since we poll on status, this flag
-    * needs to be 1 for status to be updated on successful
-    * completion
-    */
     desc.flags |= IDXD_OP_FLAG_RCR;
-    /* CRAV should be 1 since RCR = 1 */
     desc.flags |= IDXD_OP_FLAG_CRAV;
-    /* Hint to check result if they're identical */
     desc.flags |= IDXD_OP_FLAG_CR;
     desc.xfer_size = BLEN;
     desc.src_addr = (uintptr_t) src;
@@ -92,15 +84,17 @@ retry:
         return EXIT_FAILURE;
     }
     
-    _mm_mfence();
-    uint64_t start = __rdtsc();
-    _mm_mfence();
+    uint64_t start = rdtsc();
     // polling for completion
-    while (comp.status == 0);
-    _mm_mfence();
-    uint64_t end = __rdtsc();
-    _mm_mfence();
-
+    int retry = 0;
+    while (comp.status == 0 && retry++ < MAX_COMP_RETRY) {
+        umonitor(&comp);
+        if (comp.status == 0) {
+            uint64_t delay = rdtsc() + UMWAIT_DELAY;
+            umwait(UMWAIT_STATE_C0_1, delay);
+        }
+    }
+    uint64_t end = rdtsc();
     printf("time elapsed: %ld\n", end - start);
 
     if (comp.status != DSA_COMP_SUCCESS) {

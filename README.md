@@ -26,7 +26,7 @@ sudo apt install libaccel-config-dev libaccel-config1
 ```
 
 Enable DSA with configuration (`sudo` required), and give read/write priviledge to user.
-Most of data-centers enable DSA.
+Most of data-centers enable DSA by default.
 
 ```bash
 sudo accel-config load-config -c setup/contention_profile.conf -e
@@ -40,7 +40,16 @@ sudo chmod 766 /dev/dsa/*
 the `mmap` to DSA portal may failed. We give `cap_sys_rawio` to our "trusted" binaries
 
 ```bash
-sudo setcap cap_sys_rawio+ep ./build/* # or other binaries
+sudo setcap cap_sys_rawio+ep <your-binary>
+```
+
+## Play with DSA
+
+There're currently some code under `src/playground`, and run them by
+
+```bash
+cd src/playground
+make run TARGET=<target-file-without-.c>
 ```
 
 ## Reference
