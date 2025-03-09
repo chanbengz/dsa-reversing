@@ -1,8 +1,9 @@
 #include "dsa.h"
+#include <stdint.h>
 
-#define BLEN (4096 << 0)
-#define TEST_NUM 2
+#define TEST_NUM 5
 
+uint64_t BLEN = (4096 << 0);
 uint64_t start;
 uint64_t submit = 0;
 uint64_t wait = 0;
@@ -10,21 +11,27 @@ struct wq_info wq_info;
 
 int main(int argc, char *argv[])
 {
-    char* src = malloc(BLEN * TEST_NUM * sizeof(char));
-    char* dst = malloc(BLEN * TEST_NUM * sizeof(char));
-    for (int i = 0; i < TEST_NUM; i++) memset(src + i * BLEN, 0x41 + i, BLEN);
-    printf("BLEN: %d\n", BLEN);
+    char* src = malloc((BLEN << TEST_NUM) * sizeof(char));
+    char* dst = malloc((BLEN << TEST_NUM) * sizeof(char));
+    memset(src, 0xCB, BLEN << TEST_NUM);
 
     if (map_wq(&wq_info)) return EXIT_FAILURE;
 
     // skip the first, since it results in TLB miss
-    submit_wd(src, dst);
-    submit = wait = 0;
-    for (int i = 1; i < TEST_NUM; i++)
-        if (submit_wd(src + i * BLEN, dst + i * BLEN)) return 1;
+    // fill up IOTLB
+    BLEN = (4096 << TEST_NUM);
+    if (submit_wd(src, dst)) return 1;
+    printf("[benchmark] warm up done\n");
 
-    printf("[benchmark] submission: %ld\n", submit);
-    printf("[benchmark] wait: %ld\n", wait);
+    for (int i = 0; i < TEST_NUM; i++) {
+        BLEN = (4096 << i);
+        submit = wait = 0;
+        if (submit_wd(src, dst)) return 1;
+        printf("------------------------------------\n");
+        printf("[benchmark] BLEN:       %6ld bytes\n", BLEN);
+        printf("[benchmark] submission: %6ld cycles\n", submit);
+        printf("[benchmark] wait:       %6ld cycles\n", wait);
+    }
 
     return 0;
 }
