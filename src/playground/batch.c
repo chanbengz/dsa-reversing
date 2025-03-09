@@ -1,76 +1,102 @@
 #include "dsa.h"
-#include <stdint.h>
-#include <stdio.h>
+#include <stdbool.h>
 
 #define BLEN (4096 << 0)
-#define TEST_NUM 10
+#define BATCH_SIZE 16
 
-uint64_t total_cycles = 0;
+bool async = false;
+struct wq_info wq_info;
+struct dsa_hw_desc* desc_buf;
+struct dsa_completion_record* comp_buf;
+struct dsa_completion_record batch_comp __attribute__((aligned(32)));
+struct dsa_hw_desc batch_desc = {};
+
+void submit_batch(void* src, void *dst)
+{
+    for (int i = 1; i < BATCH_SIZE; i++) {
+        comp_buf[i].status          = 0;
+        desc_buf[i].opcode          = DSA_OPCODE_MEMMOVE;
+        desc_buf[i].flags           = IDXD_OP_FLAG_RCR | IDXD_OP_FLAG_CRAV;
+        desc_buf[i].xfer_size       = BLEN;
+        desc_buf[i].src_addr        = (uintptr_t)&src[i];
+        desc_buf[i].dst_addr        = (uintptr_t)&dst[i];
+        desc_buf[i].completion_addr = (uintptr_t)&(comp_buf[i]);
+    }
+
+    batch_comp.status          = 0;
+    batch_desc.opcode          = DSA_OPCODE_BATCH;
+    batch_desc.flags           = IDXD_OP_FLAG_RCR | IDXD_OP_FLAG_CRAV;
+    batch_desc.desc_count      = BATCH_SIZE;
+    batch_desc.desc_list_addr  = (uint64_t)&(desc_buf[0]);
+    batch_desc.completion_addr = (uintptr_t)&batch_comp;
+
+    uint64_t start = rdtsc();
+    // polling for completion
+    int retry = 0;
+    while (batch_comp.status == 0 && retry++ < MAX_COMP_RETRY) {
+        umonitor(&batch_comp);
+        if (batch_comp.status == 0) {
+            uint64_t delay = rdtsc() + UMWAIT_DELAY;
+            umwait(UMWAIT_STATE_C0_1, delay);
+        }
+    }
+    uint64_t end = rdtsc();
+    printf("[batch] time elapsed: %ld\n", end - start);
+}
 
 int main(int argc, char *argv[])
 {
-    char src[BLEN * TEST_NUM];
-    char dst[BLEN * TEST_NUM];
-    for (int i = 0; i < TEST_NUM; i++) memset(src + i * BLEN, 0x41 + i, BLEN);
+    char *src = (char *)malloc(BLEN * BATCH_SIZE), *dst = (char *)malloc(BLEN * BATCH_SIZE);
+    for (int i = 0; i < BATCH_SIZE; i++) memset(src + i * BLEN, 0x41 + i, BLEN);
 
+    desc_buf = (struct dsa_hw_desc *)aligned_alloc(64, BATCH_SIZE * sizeof(struct dsa_hw_desc));
+    comp_buf = (struct dsa_completion_record *)aligned_alloc(64, BATCH_SIZE * sizeof(struct dsa_completion_record));
+
+    if (map_wq(&wq_info)) return EXIT_FAILURE;
     // skip the first, since it results in TLB miss
     submit_wd(src, dst);
-    total_cycles = 0;
-
-    for (int i = 1; i < TEST_NUM; i++) {
-        int result = submit_wd(src + (BLEN << 1), dst + i * BLEN);
-        if (result) return 1;
-    }
-
-    printf("BLEN: %d\n", BLEN);
-    printf("avg cycles: %f\n", (double) total_cycles / (double) (TEST_NUM - 1));
+    async = true;
 
     return 0;
 }
 
-static inline void submit_desc_check(void *wq_portal, struct dsa_hw_desc *hw)
-{
-    int result = enqcmd(wq_portal, hw);
-    if (!result) return;
-
-    while (enqcmd(wq_portal, hw)) { printf("Enq failed\n"); _mm_pause(); }
-}
-
 int submit_wd(void* src, void *dst) {
-    /*printf("src: %p, dst: %p, char: %c\n", src, dst, *(char *)src);*/
-    struct dsa_hw_desc desc = {};
-    struct dsa_completion_record comp __attribute__((aligned(32))) = {};
-    uint32_t tlen;
     int rc;
+    struct dsa_hw_desc desc = {};
+    struct dsa_completion_record comp = {};
 
-    struct wq_info wq_info;
-    rc = map_wq(&wq_info);
-    if (rc) return EXIT_FAILURE;
+    comp.status          = 0;
+    desc.opcode          = DSA_OPCODE_MEMMOVE;
+    desc.flags           = IDXD_OP_FLAG_RCR | IDXD_OP_FLAG_CRAV;
+    desc.xfer_size       = BLEN;
+    desc.src_addr        = (uintptr_t) src;
+    desc.dst_addr        = (uintptr_t) dst;
+    desc.completion_addr = (uintptr_t) &comp;
 
-    desc.opcode = DSA_OPCODE_MEMMOVE;
-    desc.flags |= IDXD_OP_FLAG_RCR;
-    desc.flags |= IDXD_OP_FLAG_CRAV;
-    desc.flags |= IDXD_OP_FLAG_CC;
-    desc.xfer_size = BLEN;
-    desc.src_addr = (uintptr_t) src;
-    desc.dst_addr = (uintptr_t) dst;
-    desc.completion_addr = (uintptr_t)&comp;
-
+    // submit
 retry:
     if (wq_info.wq_mapped) {
-        submit_desc_check(wq_info.wq_portal, &desc);
+        submit_desc(wq_info.wq_portal, &desc);
     } else {
         int rc = write(wq_info.wq_fd, &desc, sizeof(desc));
         if (rc != sizeof(desc))
         return EXIT_FAILURE;
     }
-    
-    // polling for completion
+
+    if (async) return EXIT_SUCCESS;
+
     uint64_t start = rdtsc();
-    while (comp.status == 0);
+    // polling for completion
+    int retry = 0;
+    while (comp.status == 0 && retry++ < MAX_COMP_RETRY) {
+        umonitor(&comp);
+        if (comp.status == 0) {
+            uint64_t delay = rdtsc() + UMWAIT_DELAY;
+            umwait(UMWAIT_STATE_C0_1, delay);
+        }
+    }
     uint64_t end = rdtsc();
-    total_cycles += end - start;
-    printf("execution time: %ld\n", end - start);
+    printf("[single] time elapsed: %ld\n", end - start);
 
     if (comp.status != DSA_COMP_SUCCESS) {
         if (op_status(comp.status) == DSA_COMP_PAGE_FAULT_NOBOF) {
@@ -83,14 +109,10 @@ retry:
             desc.xfer_size -= comp.bytes_completed;
             goto retry;
         } else {
-            printf("desc failed status %u\n", comp.status);
             rc = EXIT_FAILURE;
         }
     } else {
-        rc = memcmp(src, dst, BLEN);
-        /*rc ? printf("memmove failed\n") : printf("memmove successful\n");*/
-        rc = rc ? EXIT_FAILURE : EXIT_SUCCESS;
+        rc = EXIT_SUCCESS;
     }
-
     return rc;
 }

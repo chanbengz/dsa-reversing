@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
 
     for(;;) {
         enqcmd(wq_info.wq_portal, &desc);
+        // write(wq_info.wq_fd, &desc, sizeof(desc));
     } 
 
     return 0;
