@@ -43,13 +43,16 @@ the `mmap` to DSA portal may failed. We give `cap_sys_rawio` to our "trusted" bi
 sudo setcap cap_sys_rawio+ep <your-binary>
 ```
 
-## Play with DSA
+## Playing with DSA
 
 There're currently some code under `src/playground`, and run them by
 
 ```bash
 cd src/playground
 make run TARGET=<target-file-without-.c>
+
+# debug
+make debug TARGET=<target-file-without-.c>
 ```
 
 ## Reference

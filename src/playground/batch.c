@@ -1,4 +1,5 @@
 #include "dsa.h"
+#include <stdint.h>
 
 
 #define BLEN (4096 << 0)
@@ -76,17 +77,19 @@ int main(int argc, char *argv[])
     /*poll_batch(); return 0;*/
     while(batch_comp.status == 0 || comp.status == 0);
 
-    comp.status = 0;
-    batch_comp.status = 0;
+    comp.status = batch_comp.status = 0;
     for (int i = 0; i < BATCH_SIZE; i++) comp_buf[i].status = 0;
-
     enqcmd(wq_info.wq_portal, &batch_desc);
-    /*enqcmd(wq_info.wq_portal, &desc);*/
     _mm_sfence();
-    /*enqcmd(wq_info.wq_portal, &batch_desc);*/
     enqcmd(wq_info.wq_portal, &desc);
+    poll_single();
 
-    fork() ? poll_single() : poll_batch();
+    comp.status = batch_comp.status = 0;
+    for (int i = 0; i < BATCH_SIZE; i++) comp_buf[i].status = 0;
+    enqcmd(wq_info.wq_portal, &desc);
+    _mm_sfence();
+    enqcmd(wq_info.wq_portal, &batch_desc);
+    poll_single();
 
     return 0;
 }
