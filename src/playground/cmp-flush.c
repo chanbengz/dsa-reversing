@@ -9,6 +9,8 @@
 #define TEST_NUM 10
 
 struct wq_info wq_info;
+struct dsa_hw_desc desc = {};
+struct dsa_completion_record comp __attribute__((aligned(32))) = {};
 
 int cpu_pin(uint32_t cpu)
 {
@@ -35,9 +37,9 @@ int main(int argc, char *argv[])
     cpu_pin(118);
     if (map_wq(&wq_info)) return EXIT_FAILURE;
 
-    /*
     char src[BLEN], dst[BLEN], result, randbyte;
     srand(0LL);
+    compare(src, dst); // warm up
 
     printf("[compare] not identical\n");
     randbyte = rand() % 128;
@@ -51,13 +53,12 @@ int main(int argc, char *argv[])
     memset(src, randbyte, BLEN);
     memset(dst, randbyte, BLEN);
     result = compare(src, dst);
-    */
 
     // ---- flush dst -----
     uint64_t* src_ptr = malloc(BLEN);
     memset(src_ptr, 0xCB, BLEN);
-    for (int i = 0; i < BLEN / sizeof(uint64_t); i++) *(src_ptr + i) = i; 
 
+    for (int i = 0; i < BLEN / sizeof(uint64_t); i++) *(src_ptr + i) = i; 
     printf("[cflush] cache hit\n");
     cflush(src_ptr, BLEN);
     printf("[cflush] cache miss\n");
@@ -67,10 +68,7 @@ int main(int argc, char *argv[])
 }
 
 int cflush(void *dst, int len) {
-    struct dsa_hw_desc desc = {};
-    struct dsa_completion_record comp __attribute__((aligned(32))) = {};
-
-    comp.status = 0;
+    comp.status = 0; memset(&desc, 0, 64);
     desc.opcode = DSA_OPCODE_CFLUSH;
     desc.flags = IDXD_OP_FLAG_RCR | IDXD_OP_FLAG_CRAV;
     desc.dst_addr = (uintptr_t) dst;
@@ -102,10 +100,9 @@ retry:
 }
 
 int compare(void* src, void *dst) {
-    struct dsa_hw_desc desc = {};
-    struct dsa_completion_record comp __attribute__((aligned(32))) = {};
     uint32_t tlen, rc;
 
+    comp.status = 0; memset(&desc, 0, 64);
     desc.opcode = DSA_OPCODE_COMPARE;
     desc.flags |= IDXD_OP_FLAG_RCR;
     desc.flags |= IDXD_OP_FLAG_CRAV;
