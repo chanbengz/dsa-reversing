@@ -1,11 +1,11 @@
-# DSA
+# DSA Reversing
 
 This repos holds for experiment of Intel(R) Data Streaming Accelerator.
 
 ## Getting Started
 
 > [!NOTE]
-> We recommend using Ubuntu 24.04 LTS for this experiment.
+> We recommend using Ubuntu 24.04 LTS and Intel Xeon Scalable for this experiment.
 
 Make sure the driver of DSA and IOMMU is properly installed and enabled during bootup.
 The following command do output something.
@@ -48,7 +48,7 @@ sudo setcap cap_sys_rawio+ep <your-binary>
 There're currently some code under `src/playground`, and run them by
 
 ```bash
-cd src/playground
+cd src/playground && mkdir -p build
 make run TARGET=<target-file-without-.c>
 
 # debug

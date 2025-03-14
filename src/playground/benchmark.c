@@ -1,7 +1,7 @@
 #include "dsa.h"
 #include <stdint.h>
 
-#define TEST_NUM 5
+#define TEST_NUM 7
 
 uint64_t BLEN = (4096 << 0);
 uint64_t start;
