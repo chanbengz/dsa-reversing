@@ -8,11 +8,12 @@
 struct wq_info wq_info;
 struct dsa_hw_desc *desc_buf, batch_desc __attribute__((aligned(64))), desc __attribute__((aligned(64)));
 struct dsa_completion_record *comp_buf, batch_comp __attribute__((aligned(32))), comp __attribute__((aligned(32)));
+uint64_t start;
 
 void poll_batch()
 {
     int retry = 0;
-    uint64_t start = rdtsc(), ba_wait;
+    uint64_t ba_wait;
     while (batch_comp.status == 0 && retry++ < MAX_COMP_RETRY) {
         umonitor(&batch_comp);
         if (batch_comp.status == 0) {
@@ -27,7 +28,7 @@ void poll_batch()
 void poll_single()
 { 
     int retry = 0;
-    uint64_t start = rdtsc(), wd_wait;
+    uint64_t wd_wait;
     while (comp.status == 0 && retry++ < MAX_COMP_RETRY) {
         umonitor(&comp);
         if (comp.status == 0) {
@@ -75,22 +76,21 @@ int main(int argc, char *argv[])
     enqcmd(wq_info.wq_portal, &desc);
     enqcmd(wq_info.wq_portal, &batch_desc);
     while(batch_comp.status == 0 || comp.status == 0);
-    /*
-    batch_comp.status = 0;
-    enqcmd(wq_info.wq_portal, &batch_desc);
-    poll_batch(); return 0;
-    */
 
+    // batch first and then single
     comp.status = batch_comp.status = 0;
     for (int i = 0; i < BATCH_SIZE; i++) comp_buf[i].status = 0;
     enqcmd(wq_info.wq_portal, &batch_desc);
     _mm_sfence();
     enqcmd(wq_info.wq_portal, &desc);
+    start = rdtsc();
     poll_single();
 
+    // single first and then batch
     comp.status = batch_comp.status = 0;
     for (int i = 0; i < BATCH_SIZE; i++) comp_buf[i].status = 0;
     enqcmd(wq_info.wq_portal, &desc);
+    start = rdtsc();
     _mm_sfence();
     enqcmd(wq_info.wq_portal, &batch_desc);
     poll_single();
