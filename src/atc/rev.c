@@ -1,6 +1,6 @@
 #include "dsa.h"
 
-#define BLEN (4096 << 16)
+#define BLEN (4096ull << 26)
 #define DSA_OP_FLAG_US (1 << 16)
 
 char *probe_arr;
@@ -70,9 +70,13 @@ int main(int argc, char *argv[])
     desc.xfer_size         = 8;
     desc.expected_res      = 0;
 
-    printf("ATC: %ld\n", probe(probe_arr));
-    printf("ATC: %ld\n", probe(probe_arr));
-    printf("ATC: %ld\n", probe(probe_arr + 1));
+    printf("probe_arr: %p\n", probe_arr);
+    printf("comp:      %p\n", &comp);
+
+    printf("ATC: %ld\n", probe(probe_arr)); // Miss
+    printf("ATC: %ld\n", probe(probe_arr)); // Hit
+    printf("ATC: %ld\n", probe(probe_arr + 4096)); // Miss
+    printf("ATC: %ld\n", probe(probe_arr)); // Miss
 
     return 0;
 }

@@ -1,11 +1,7 @@
 #include "dsa.h"
-#include <linux/idxd.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <unistd.h>
 
 #define TEST_SIZE 1
-#define BLEN (4096 << 16)
+#define BLEN (4096ull << 26) // 256GB
 #define DSA_OP_FLAG_US (1 << 16)
 
 struct dsa_completion_record* probe_arr;
@@ -16,8 +12,7 @@ struct dsa_hw_desc desc = {};
 
 uint64_t probe(void* addr)
 {
-    int retry = 0;
-    uint64_t start = 0, end = 0;
+    uint64_t start = 0, end = 0, retry = 0;
     struct dsa_completion_record* comp = (struct dsa_completion_record*) addr;
 
     // Initialize the descriptor
@@ -26,7 +21,6 @@ uint64_t probe(void* addr)
     // desc.src_addr          = (uintptr_t) addr;
     // memset(addr, 0, 8);
 
-retry:
     enqcmd(wq_info.wq_portal, &desc);
 
     start = rdtsc();
@@ -47,7 +41,7 @@ retry:
             volatile char *t;
             t = (char *)comp->fault_addr;
             wr ? *t = *t : *t;
-            goto retry;
+            // goto retry;
         }
     }
 
@@ -56,11 +50,18 @@ retry:
 
 void profile(void* base, int w, int s)
 {
+    probe(base); // Miss
+    // The base address is present in ATC
     for (int i = 0; i < TEST_SIZE; i++) {
         for (int j = 1; j <= w + 1; j++) {
-            probe(base + j * s * 4096);
+            void* addr = base + j * s * 4096;
+            printf("Probing %p\n", addr);
+            probe(addr);
         }
-    }   
+    }
+    // Hit:  not evicted
+    // Miss: evicted
+    probe(base); 
 }
 
 int main(int argc, char *argv[])
@@ -79,14 +80,21 @@ int main(int argc, char *argv[])
     start = rdtsc();
     while (probe_arr[0].status == 0) _mm_pause();
     end = rdtsc();
-    printf("Warmup: %ld\n", end - start);
+    // printf("Warmup: %ld\n", end - start);
 
     // Benchmarking ATC
+    void* base = probe_arr;
     if (argc == 3) {
         int w = atoi(argv[1]);
         int s = atoi(argv[2]);
         printf("Testing W = %d, S = %d\n", w, s);
-        profile(probe_arr, w, s);
+        profile(base + (0x7E << 5), w, s);
+    } else if (argc == 2) {
+        void *addr = base + (0x20 << atoi(argv[1]));
+        probe(base); // Hit
+        printf("Probing %p\n", addr);
+        probe(addr);
+        probe(base);
     }
 
     return 0;

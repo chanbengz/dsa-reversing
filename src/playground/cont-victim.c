@@ -82,7 +82,7 @@ retry:
         }
     } else {
         rc = memcmp(src, dst, BLEN);
-        /*rc ? printf("memmove failed: %d\n", rc) : printf("memmove successful\n");*/
+        // rc ? printf("memmove failed: %d\n", rc) : printf("memmove successful\n");
         rc = rc ? EXIT_FAILURE : EXIT_SUCCESS;
     }
 
