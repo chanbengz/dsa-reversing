@@ -15,7 +15,7 @@ uint64_t probe(void* addr)
     int retry = 0;
 
     // Initialize the descriptor
-    comp.status            = 0;
+    
     desc.src_addr          = (uintptr_t) addr;
     memset(addr, 0, 8);
 
@@ -65,18 +65,11 @@ int main(int argc, char *argv[])
     end = rdtsc();
     printf("Warmup: %ld\n", end - start);
 
-    desc.opcode            = DSA_OPCODE_COMPVAL;
-    desc.comp_pattern      = 0x0;
-    desc.xfer_size         = 8;
-    desc.expected_res      = 0;
-
-    printf("probe_arr: %p\n", probe_arr);
-    printf("comp:      %p\n", &comp);
-
     printf("ATC: %ld\n", probe(probe_arr)); // Miss
     printf("ATC: %ld\n", probe(probe_arr)); // Hit
-    printf("ATC: %ld\n", probe(probe_arr + 4096)); // Miss
+    for (int i = 12; i <= 20; i++) {
+        printf("ATC: %ld\n", probe(probe_arr + (4096ull << i)));
+    }
     printf("ATC: %ld\n", probe(probe_arr)); // Miss
-
     return 0;
 }

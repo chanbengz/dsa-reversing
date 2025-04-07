@@ -24,6 +24,8 @@ struct wq_info {
     int wq_fd;
 };
 
+uint64_t probe(void* addr);
+
 static inline int enqcmd(volatile void *reg, struct dsa_hw_desc *desc)
 {
     uint8_t retry;
