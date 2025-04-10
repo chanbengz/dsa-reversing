@@ -13,9 +13,6 @@ uint64_t probe(void* addr)
 {
     uint64_t start, end;
     int retry = 0;
-
-    // Initialize the descriptor
-    
     desc.src_addr          = (uintptr_t) addr;
     memset(addr, 0, 8);
 
@@ -68,7 +65,7 @@ int main(int argc, char *argv[])
     printf("ATC: %ld\n", probe(probe_arr)); // Miss
     printf("ATC: %ld\n", probe(probe_arr)); // Hit
     for (int i = 12; i <= 20; i++) {
-        printf("ATC: %ld\n", probe(probe_arr + (4096ull << i)));
+        printf("ATC: %ld\n", probe(probe_arr + (4096L << i)));
     }
     printf("ATC: %ld\n", probe(probe_arr)); // Miss
     return 0;
