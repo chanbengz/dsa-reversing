@@ -1,4 +1,6 @@
 #include "dsa.h"
+#include <stdint.h>
+#include <sys/types.h>
 #define TESTS_PER_PROFILE 1
 #define BLEN (4096ull << 26) // 256GB
 #define DSA_OP_FLAG_US (1 << 16)
@@ -24,21 +26,23 @@ int main(int argc, char *argv[])
     probe_arr[0].status = 0;
     desc.opcode = DSA_OPCODE_NOOP;
     desc.flags = IDXD_OP_FLAG_CRAV | IDXD_OP_FLAG_RCR;
-    desc.completion_addr = (uintptr_t) &probe_arr[0];
-    enqcmd(wq_info.wq_portal, &desc);
-    while (probe_arr[0].status == 0) _mm_pause();
+
 
     // Benchmarking ATC
     void* base = probe_arr;
-    probe(base + 4096); // miss and evict base
     printf("Cache miss: %ld\n", probe(base)); // miss
     printf("Cache hit : %ld\n", probe(base)); // hit
 
+    uint64_t offset = 1L << 31;
+    printf("base addr : %ld\n", probe(base)); // hit
+    printf("offset    : %ld\n", probe(base + offset)); // hit
+    printf("base addr : %ld\n", probe(base)); // hit
+
     // Different tests
-    printf("%p: %ld\n", &arr_onstack, probe(&arr_onstack));
-    printf("%p: %ld\n", base, probe(base));
-    printf("%p: %ld\n", &arr_onbss, probe(&arr_onbss));
-    printf("%p: %ld\n", &arr_onbss, probe(&arr_onbss));
+    // printf("%p: %ld\n", &arr_onstack, probe(&arr_onstack));
+    // printf("%p: %ld\n", base, probe(base));
+    // printf("%p: %ld\n", &arr_onbss, probe(&arr_onbss));
+    // printf("%p: %ld\n", &arr_onbss, probe(&arr_onbss));
 
     return 0;
 }

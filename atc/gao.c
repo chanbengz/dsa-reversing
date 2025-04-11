@@ -9,9 +9,9 @@ struct dsa_hw_desc desc = {};
 int probe_count = 0;
 
 
-#define TESTS_PER_PROBE 4
-#define MAX_OFFSET 20
-uint64_t results[MAX_OFFSET + 1][TESTS_PER_PROBE];
+#define TESTS_PER_PROBE 8
+#define MAX_OFFSET 25
+uint64_t results[MAX_OFFSET + 1][TESTS_PER_PROBE + 1];
 
 int main(int argc, char *argv[])
 {
@@ -22,13 +22,9 @@ int main(int argc, char *argv[])
     probe_arr[0].status = 0;
     desc.opcode = DSA_OPCODE_NOOP;
     desc.flags = IDXD_OP_FLAG_CRAV | IDXD_OP_FLAG_RCR;
-    desc.completion_addr = (uintptr_t) &probe_arr[0];
-    enqcmd(wq_info.wq_portal, &desc);
-    while (probe_arr[0].status == 0) _mm_pause();
 
     // Benchmarking ATC
     void* base = probe_arr;
-    probe(base + 4096);
     printf("Cache miss: %ld\n", probe(base));
     printf("Cache hit:  %ld\n", probe(base));
 
