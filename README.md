@@ -29,10 +29,10 @@ Enable DSA with configuration (`sudo` required), and grant read/write priviledge
 Most of data-centers enable DSA by default.
 
 ```bash
-sudo accel-config load-config -c setup/some_config.conf -e
+sudo accel-config load-config -c setup/config/some_config.conf -e
 sudo chmod 766 /dev/dsa/*
 # or
-sudo ./setup/setup_dsa.sh setup/some_config.conf
+sudo ./setup/setup_dsa.sh setup/config/some_config.conf
 ```
 
 ## Playing with DSA

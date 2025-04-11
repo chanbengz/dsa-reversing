@@ -4,6 +4,7 @@
 #define DSA_OP_FLAG_US (1 << 16)
 
 struct dsa_completion_record* probe_arr;
+struct dsa_completion_record arr_onbss = {};
 struct wq_info wq_info;
 struct dsa_hw_desc desc = {};
 int probe_count = 0;
@@ -15,6 +16,7 @@ uint64_t results[MAX_OFFSET + 1][TESTS_PER_PROBE];
 
 int main(int argc, char *argv[])
 {
+    struct dsa_completion_record arr_onstack __attribute__((aligned(32))) = {};
     probe_arr = (struct dsa_completion_record *)aligned_alloc(32, BLEN);
     memset(probe_arr, 0, BLEN >> 10);
     if (map_wq(&wq_info)) return EXIT_FAILURE;
@@ -28,41 +30,15 @@ int main(int argc, char *argv[])
 
     // Benchmarking ATC
     void* base = probe_arr;
-    probe(base + 4096);
-    printf("Cache miss: %ld\n", probe(base));
-    printf("Cache hit:  %ld\n", probe(base));
+    probe(base + 4096); // miss and evict base
+    printf("Cache miss: %ld\n", probe(base)); // miss
+    printf("Cache hit : %ld\n", probe(base)); // hit
 
     // Different tests
-    switch (argc) {
-        case 2:
-            probe(base); // let base be in cache
-            printf("Sleeping %s seconds\n", argv[1]);
-            printf("start: %ld\n", probe(base));
-            sleep(atoi(argv[1]));
-            __builtin_ia32_lfence();
-            printf("end:   %ld\n", probe(base));
-            break;
-
-        default:
-            for (int j = 0; j < TESTS_PER_PROBE; j++) {
-                for (int i = 12; i <= MAX_OFFSET; i++) {
-                    probe(base);
-                    results[i][j] = probe(base + (4096ull << i));
-                    probe(base);
-                }
-            }
-
-            // ----- header
-            for (int i = 12; i <= MAX_OFFSET; i++) printf("| %4d ", i); printf("|\n");
-            for (int i = 12; i <= MAX_OFFSET; i++) printf("|------");   printf("|\n");
-            // ----- body
-            for (int j = 0; j < TESTS_PER_PROBE; j++) {
-                for (int i = 12; i <= MAX_OFFSET; i++) printf("| %4ld ", results[i][j]);
-                printf("|\n");
-            }
-            printf("probe_count: %d\n", probe_count);
-            break;
-    }
+    printf("%p: %ld\n", &arr_onstack, probe(&arr_onstack));
+    printf("%p: %ld\n", base, probe(base));
+    printf("%p: %ld\n", &arr_onbss, probe(&arr_onbss));
+    printf("%p: %ld\n", &arr_onbss, probe(&arr_onbss));
 
     return 0;
 }

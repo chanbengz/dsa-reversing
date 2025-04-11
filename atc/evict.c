@@ -1,9 +1,11 @@
 #include "dsa.h"
+#include <linux/idxd.h>
 #define TESTS_PER_PROFILE 1
 #define BLEN (4096ull << 26) // 256GB
 #define DSA_OP_FLAG_US (1 << 16)
 
 struct dsa_completion_record* probe_arr;
+struct dsa_completion_record arr_onbss = {};
 struct wq_info wq_info;
 struct dsa_hw_desc desc = {};
 
@@ -31,12 +33,15 @@ int map_another_wq(struct wq_info* wq_info) {
 
 int main(int argc, char *argv[])
 {
+    struct dsa_completion_record arr_onstack __attribute__((aligned(32))) = {};
     probe_arr = (struct dsa_completion_record *)aligned_alloc(32, BLEN);
     memset(probe_arr, 0, BLEN >> 10);
     
-    // if (map_wq(&wq_info)) return EXIT_FAILURE;
-    if (map_another_wq(&wq_info)) return EXIT_FAILURE;
+    if (map_wq(&wq_info)) return EXIT_FAILURE;
+    // if (map_another_wq(&wq_info)) return EXIT_FAILURE;
     probe(probe_arr);
+    // probe(&arr_onstack);
+    // probe(&arr_onbss);
 
     return 0;
 }
