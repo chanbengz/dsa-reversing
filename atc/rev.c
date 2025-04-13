@@ -12,6 +12,7 @@ struct dsa_hw_desc desc = {};
 int probe_count = 0;
 
 
+#define WARMUP_TESTS 16
 #define TESTS_PER_PROBE 4
 #define MAX_OFFSET 20
 uint64_t results[MAX_OFFSET + 1][TESTS_PER_PROBE];
@@ -22,16 +23,22 @@ int main(int argc, char *argv[])
     probe_arr = (struct dsa_completion_record *)aligned_alloc(32, BLEN);
     memset(probe_arr, 0, BLEN >> 10);
     if (map_wq(&wq_info)) return EXIT_FAILURE;
-    // Warm up
-    probe_arr[0].status = 0;
+
     desc.opcode = DSA_OPCODE_NOOP;
     desc.flags = IDXD_OP_FLAG_CRAV | IDXD_OP_FLAG_RCR;
 
+    // Warm up
+    void* base = probe_arr;
+    uint64_t miss_t = 0, hit_t = 0;
+    for (int i = 0; i < WARMUP_TESTS; i++) {
+        probe(base); probe(&arr_onstack); probe(&arr_onbss);
+        miss_t += probe(base);
+        hit_t += probe(base);
+    }
 
     // Benchmarking ATC
-    void* base = probe_arr;
-    printf("Cache miss: %ld\n", probe(base)); // miss
-    printf("Cache hit : %ld\n", probe(base)); // hit
+    printf("Cache miss: %ld\n", miss_t / WARMUP_TESTS);
+    printf("Cache hit:  %ld\n", hit_t  / WARMUP_TESTS);
 
     uint64_t offset = 1L << 31;
     printf("base addr : %ld\n", probe(base)); // hit

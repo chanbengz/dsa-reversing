@@ -6,30 +6,41 @@
 struct dsa_completion_record* probe_arr;
 struct wq_info wq_info;
 struct dsa_hw_desc desc = {};
+struct dsa_completion_record comp_onbss __attribute__((aligned(32))) = {};
 int probe_count = 0;
 
 
 #define TESTS_PER_PROBE 8
-#define MAX_OFFSET 25
+#define WARMUP_TESTS 16
+#define START_OFFSET 24
+#define MAX_OFFSET 37
 uint64_t results[MAX_OFFSET + 1][TESTS_PER_PROBE + 1];
 
 int main(int argc, char *argv[])
 {
+    struct dsa_completion_record comp_onstack __attribute__((aligned(32))) = {};
     probe_arr = (struct dsa_completion_record *)aligned_alloc(32, BLEN);
     memset(probe_arr, 0, BLEN >> 10);
     if (map_wq(&wq_info)) return EXIT_FAILURE;
     // Warm up
-    probe_arr[0].status = 0;
     desc.opcode = DSA_OPCODE_NOOP;
     desc.flags = IDXD_OP_FLAG_CRAV | IDXD_OP_FLAG_RCR;
 
     // Benchmarking ATC
     void* base = probe_arr;
-    printf("Cache miss: %ld\n", probe(base));
-    printf("Cache hit:  %ld\n", probe(base));
+    uint64_t miss_t = 0, hit_t = 0;
+    for (int i = 0; i < WARMUP_TESTS; i++) {
+        // eviction
+        probe(base); probe(&comp_onbss); probe(&comp_onstack);
+        miss_t += probe(base);
+        hit_t += probe(base);
+    }
+        printf("Cache miss: %ld\n", miss_t / WARMUP_TESTS);
+        printf("Cache hit:  %ld\n", hit_t  / WARMUP_TESTS);
 
     // Different tests
     switch (argc) {
+        case 3: break;
         case 2:
             probe(base); // let base be in cache
             printf("Sleeping %s seconds\n", argv[1]);
@@ -41,19 +52,19 @@ int main(int argc, char *argv[])
 
         default:
             for (int j = 0; j < TESTS_PER_PROBE; j++) {
-                for (int i = 12; i <= MAX_OFFSET; i++) {
+                for (int i = START_OFFSET; i <= MAX_OFFSET; i++) {
                     probe(base);
-                    results[i][j] = probe(base + (4096ull << i));
+                    results[i][j] = probe(base + (1L << i));
                     probe(base);
                 }
             }
 
             // ----- header
-            for (int i = 12; i <= MAX_OFFSET; i++) printf("| %4d ", i); printf("|\n");
-            for (int i = 12; i <= MAX_OFFSET; i++) printf("|------");   printf("|\n");
+            for (int i = START_OFFSET; i <= MAX_OFFSET; i++) printf("| %4d ", i); printf("|\n");
+            for (int i = START_OFFSET; i <= MAX_OFFSET; i++) printf("|------");   printf("|\n");
             // ----- body
             for (int j = 0; j < TESTS_PER_PROBE; j++) {
-                for (int i = 12; i <= MAX_OFFSET; i++) printf("| %4ld ", results[i][j]);
+                for (int i = START_OFFSET; i <= MAX_OFFSET; i++) printf("| %4ld ", results[i][j]);
                 printf("|\n");
             }
             printf("probe_count: %d\n", probe_count);
