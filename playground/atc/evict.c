@@ -36,9 +36,17 @@ int main(int argc, char *argv[])
     struct dsa_completion_record arr_onstack __attribute__((aligned(32))) = {};
     probe_arr = (struct dsa_completion_record *)aligned_alloc(32, BLEN);
     memset(probe_arr, 0, BLEN >> 10);
+
+    if (argc != 2) {
+        printf("Usage: %s <another wq ? 0 : 1>\n", argv[0]);
+        return 1;
+    }
     
-    if (map_wq(&wq_info)) return EXIT_FAILURE;
-    // if (map_another_wq(&wq_info)) return EXIT_FAILURE;
+    if (atoi(argv[1]) == 1)
+        if (map_wq(&wq_info)) return EXIT_FAILURE;
+    else
+        if (map_another_wq(&wq_info)) return EXIT_FAILURE;
+
     probe(probe_arr);
     // probe(&arr_onstack);
     // probe(&arr_onbss);

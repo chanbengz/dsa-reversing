@@ -11,13 +11,18 @@ int probe_count = 0;
 
 
 #define TESTS_PER_PROBE 8
-#define WARMUP_TESTS 16
+#define WARMUP_TESTS 10000
 #define START_OFFSET 24
 #define MAX_OFFSET 37
 uint64_t results[MAX_OFFSET + 1][TESTS_PER_PROBE + 1];
 
 int main(int argc, char *argv[])
 {
+    if (argc > 3) {
+        printf("Usage: %s [sleep_time]\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+
     struct dsa_completion_record comp_onstack __attribute__((aligned(32))) = {};
     probe_arr = (struct dsa_completion_record *)aligned_alloc(32, BLEN);
     memset(probe_arr, 0, BLEN >> 10);
@@ -35,12 +40,11 @@ int main(int argc, char *argv[])
         miss_t += probe(base);
         hit_t += probe(base);
     }
-        printf("Cache miss: %ld\n", miss_t / WARMUP_TESTS);
-        printf("Cache hit:  %ld\n", hit_t  / WARMUP_TESTS);
+    printf("Cache miss: %ld\n", miss_t / WARMUP_TESTS);
+    printf("Cache hit:  %ld\n", hit_t  / WARMUP_TESTS);
 
     // Different tests
     switch (argc) {
-        case 3: break;
         case 2:
             probe(base); // let base be in cache
             printf("Sleeping %s seconds\n", argv[1]);

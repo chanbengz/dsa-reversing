@@ -1,25 +1,25 @@
 #include "dsa.h"
 #include <stdint.h>
 #include <sys/types.h>
-#define TESTS_PER_PROFILE 1
+
 #define BLEN (4096ull << 26) // 256GB
 #define DSA_OP_FLAG_US (1 << 16)
 
 struct dsa_completion_record* probe_arr;
-struct dsa_completion_record arr_onbss = {};
+struct dsa_completion_record arr_onbss[4096] __attribute__((aligned(32)));
 struct wq_info wq_info;
 struct dsa_hw_desc desc = {};
 int probe_count = 0;
 
 
-#define WARMUP_TESTS 16
-#define TESTS_PER_PROBE 4
+#define WARMUP_TESTS 10000
+#define TESTS_PER_PROBE 10000
 #define MAX_OFFSET 20
-uint64_t results[MAX_OFFSET + 1][TESTS_PER_PROBE];
+#define EVCTION_SETS 2
 
 int main(int argc, char *argv[])
 {
-    struct dsa_completion_record arr_onstack __attribute__((aligned(32))) = {};
+    struct dsa_completion_record arr_onstack[4] __attribute__((aligned(32))) = {0,0};
     probe_arr = (struct dsa_completion_record *)aligned_alloc(32, BLEN);
     memset(probe_arr, 0, BLEN >> 10);
     if (map_wq(&wq_info)) return EXIT_FAILURE;
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
     void* base = probe_arr;
     uint64_t miss_t = 0, hit_t = 0;
     for (int i = 0; i < WARMUP_TESTS; i++) {
-        probe(base); probe(&arr_onstack); probe(&arr_onbss);
+        probe(base); probe(arr_onstack); probe(arr_onbss);
         miss_t += probe(base);
         hit_t += probe(base);
     }
@@ -40,16 +40,50 @@ int main(int argc, char *argv[])
     printf("Cache miss: %ld\n", miss_t / WARMUP_TESTS);
     printf("Cache hit:  %ld\n", hit_t  / WARMUP_TESTS);
 
-    uint64_t offset = 1L << 31;
-    printf("base addr : %ld\n", probe(base)); // hit
-    printf("offset    : %ld\n", probe(base + offset)); // hit
-    printf("base addr : %ld\n", probe(base)); // hit
+    if (argc != 2) {
+        printf("Usage: %s <0: offset, 1: addr, 2: evict>\n", argv[0]);
+        return 1;
+    }
 
-    // Different tests
-    // printf("%p: %ld\n", &arr_onstack, probe(&arr_onstack));
-    // printf("%p: %ld\n", base, probe(base));
-    // printf("%p: %ld\n", &arr_onbss, probe(&arr_onbss));
-    // printf("%p: %ld\n", &arr_onbss, probe(&arr_onbss));
+    uint64_t offset = 1L << 31;
+    uint64_t first_t = 0, second_t = 0, third_t = 0;
+    uint64_t results[5] = {0, 0, 0, 0};
+    uint64_t result = 0;
+
+    switch (atoi(argv[1])) {
+        case 0:
+            for (int i = 0; i < TESTS_PER_PROBE; i++) {
+                first_t += probe(base); // hit
+                second_t += probe(base + offset); // miss
+                third_t += probe(base); // miss
+            }
+            printf("base addr : %ld\n", first_t / TESTS_PER_PROBE); 
+            printf("offset    : %ld\n", second_t / TESTS_PER_PROBE);
+            printf("base addr : %ld\n", third_t / TESTS_PER_PROBE);
+            break;
+        case 1: 
+            for (int i = 0; i < TESTS_PER_PROBE; i++) {
+                results[0] += probe(arr_onstack);
+                results[1] += probe(base);
+                results[2] += probe(arr_onbss);
+                results[3] += probe(base);
+            }
+            printf("%p: %ld\n", arr_onstack, results[0] / TESTS_PER_PROBE);
+            printf("%p: %ld\n", base, results[1] / TESTS_PER_PROBE);
+            printf("%p: %ld\n", &arr_onbss, results[2] / TESTS_PER_PROBE);
+            printf("%p: %ld\n", base, results[3] / TESTS_PER_PROBE);
+            break;
+        case 2:
+            for (int i = 0; i < TESTS_PER_PROBE; i++) {
+                for (int j = 0; j < EVCTION_SETS; j++) probe(base + (4096L << j));
+                result += probe(base);
+            }
+            printf("evict trial: %ld\n", result / TESTS_PER_PROBE);
+            break;
+        default:
+            printf("Invalid argument\n");
+            break;
+    }
 
     return 0;
 }
