@@ -1,7 +1,8 @@
 [package]
-name = "dsa-attacker"
+name = "dsa-attack"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-rustix = "1.0.5"
+libc = "0.2.172"
+rustix = { version = "1.0.5", features = ['mm', 'fs']}

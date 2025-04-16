@@ -14,7 +14,7 @@ int probe_count = 0;
 
 #define WARMUP_TESTS 10000
 #define TESTS_PER_PROBE 10000
-#define MAX_OFFSET 20
+#define MAX_OFFSET 33
 #define EVCTION_SETS 2
 
 int main(int argc, char *argv[])
@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    uint64_t offset = 1L << 31;
+    uint64_t offset = 1L << MAX_OFFSET;
     uint64_t first_t = 0, second_t = 0, third_t = 0;
     uint64_t results[5] = {0, 0, 0, 0};
     uint64_t result = 0;
