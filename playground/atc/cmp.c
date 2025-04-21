@@ -20,7 +20,8 @@ uint64_t probe(void* addr)
     memset(addr, 0, 8);
 
 retry:
-    enqcmd(wq_info.wq_portal, &desc);
+    // enqcmd(wq_info.wq_portal, &desc);
+    write(wq_info.wq_fd, &desc, sizeof(desc));
 
     start = rdtsc();
     while (comp.status == 0 && retry++ < MAX_COMP_RETRY) {
@@ -59,7 +60,8 @@ int main(int argc, char *argv[])
     desc.opcode = DSA_OPCODE_NOOP;
     desc.flags = IDXD_OP_FLAG_CRAV | IDXD_OP_FLAG_RCR;
     desc.completion_addr = (uintptr_t) &comp;
-    enqcmd(wq_info.wq_portal, &desc);
+    // enqcmd(wq_info.wq_portal, &desc);
+    write(wq_info.wq_fd, &desc, sizeof(desc));
     start = rdtsc();
     while (comp.status == 0) _mm_pause();
     end = rdtsc();
