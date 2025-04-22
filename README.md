@@ -29,35 +29,37 @@ Enable DSA with configuration (`sudo` required), and grant read/write priviledge
 Most of data-centers enable DSA by default.
 
 ```bash
+sudo ./setup/setup_dsa.sh setup/config/some_config.conf
+# or manually
 sudo accel-config load-config -c setup/config/some_config.conf -e
 sudo chmod 766 /dev/dsa/*
-# or
-sudo ./setup/setup_dsa.sh setup/config/some_config.conf
 ```
 
 ## Playing with DSA
 
-There're currently some code under `playground`, and run them by
+`playground` holds the experiment sources.
+For example, in `playground/wq` we explored the work queue in DSA,
+run them by
 
 ```bash
-cd playground && mkdir -p build
+cd playground/wq && mkdir -p build
 make run TARGET=<target-file-without-.c>
 
 # debug
 make debug TARGET=<target-file-without-.c>
 ```
 
-In `atc`, we tested the internal structure of ATC (also known as Device TLB)
+In `playgroundatc`, we tested the internal structure of ATC (also known as Device TLB)
 as part of DSA device. You can run it by
 
 ```bash
-cd atc && mkdir -p build
+cd playground/atc && mkdir -p build
 # same as above
 ```
 
 ## Attack
 
-TODO
+See [attack/README.md](attack/README.md) or [attack-rs/README.md](attack-rs/README.md).
 
 ## Issues
 
