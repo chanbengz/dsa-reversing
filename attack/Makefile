@@ -7,6 +7,9 @@ EXES = $(patsubst %.c, %, $(SRCS))
 
 buildall: $(EXES)
 
+run: build
+	./build/$(TARGET)
+
 debug: $(TARGET).c build
 	gdb ./build/$(TARGET)
 
@@ -21,4 +24,4 @@ $(EXES):%:%.c $(DEPS)
 clean:
 	rm -rf build
 
-.PHONY: run clean build
+.PHONY: run clean build 

@@ -148,3 +148,10 @@ umwait(unsigned int state, unsigned long long timeout) {
 }
 
 int submit_wd(void*, void*);
+
+static inline void nsleep(uint64_t ns) {
+    uint64_t start = rdtsc();
+    while (rdtsc() - start < ns) {
+        asm volatile("" : : : "memory");
+    }
+}
