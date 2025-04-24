@@ -17,14 +17,15 @@
 #define UMWAIT_DELAY 100000
 #define UMWAIT_STATE_C0_2 0
 #define UMWAIT_STATE_C0_1 1
+#define BITS_REPEAT 32
+#define BIT_INTERVAL_NS 100000
+#define START_BITS 3
 
 struct wq_info {
     bool wq_mapped;
     void *wq_portal;
     int wq_fd;
 };
-
-uint64_t probe(void* addr);
 
 static inline int enqcmd(volatile void *reg, struct dsa_hw_desc *desc)
 {
@@ -37,11 +38,6 @@ static inline int enqcmd(volatile void *reg, struct dsa_hw_desc *desc)
 static inline void submit_desc(void *wq_portal, struct dsa_hw_desc *hw)
 {
     while (enqcmd(wq_portal, hw)) _mm_pause();
-}
-
-static uint8_t op_status(uint8_t status)
-{
-    return status & DSA_COMP_STATUS_MASK;
 }
 
 static bool is_write_syscall_success(int fd)
@@ -86,8 +82,7 @@ static int map_wq(struct wq_info *wq_info)
              * Use accfg_wq_(*) functions select WQ of type
              * ACCFG_WQT_USER and desired mode
              */
-            wq_found = accfg_wq_get_type(wq) == ACCFG_WQT_USER &&
-            accfg_wq_get_mode(wq) == ACCFG_WQ_SHARED;
+            wq_found = accfg_wq_get_type(wq) == ACCFG_WQT_USER;
             if (wq_found) break;
         }
         if (wq_found) break;
