@@ -17,8 +17,8 @@
 #define UMWAIT_DELAY 100000
 #define UMWAIT_STATE_C0_2 0
 #define UMWAIT_STATE_C0_1 1
-#define BITS_REPEAT 32
-#define BIT_INTERVAL_NS 100000
+#define BITS_REPEAT 30
+#define BIT_INTERVAL_NS 50000
 #define START_BITS 3
 
 struct wq_info {

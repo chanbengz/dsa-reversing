@@ -129,7 +129,7 @@ calib:
         }
 
         received_bit = bits > (BITS_REPEAT / 4);
-        printf("[cc_receiver] Received bit: %d\n", received_bit);
+        printf("[cc_receiver] Received: %d (score = %d)\n", received_bit, bits);
     }
     
     return EXIT_SUCCESS;

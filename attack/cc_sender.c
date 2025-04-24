@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
     
     const char* message = "HELLO";
     size_t message_len = strlen(message);
-    size_t message_pos = 1;
+    size_t message_pos = 4;
     
     int repeat = 1;
     for (int i = 0; i < 8; i++) {
@@ -85,7 +85,6 @@ int main(int argc, char *argv[]) {
         _mm_mfence();
         send_char(message[message_pos]);
     }
-    printf("[cc_sender] Done transmitting data\n");
     
     return EXIT_SUCCESS;
 } 
