@@ -7,7 +7,7 @@
 #define DIFF_THRESHOLD 300
 #define CALIBRATION_RETRIES 10
 
-#define UPDATE_THRESHOLD(hit, miss) ((hit + miss * 19) / 20)
+#define UPDATE_THRESHOLD(hit, miss) ((hit + miss * 9) / 10)
 
 struct wq_info wq_info;
 struct dsa_hw_desc desc = {};
@@ -128,7 +128,7 @@ calib:
             bits += receive();
         }
 
-        received_bit = bits > (BITS_REPEAT / 4);
+        received_bit = bits > (BITS_REPEAT / 3);
         printf("[cc_receiver] Received: %d (score = %d)\n", received_bit, bits);
     }
     
