@@ -1,6 +1,10 @@
 #include "dsa.h"
-#include <stdint.h>
 
+/*
+ * This experiment tests the QoS of batch and work descriptor submission.
+ * TL;DR: when submit work and batch descriptor simultaneously, the work descriptor
+ * will be scheduled first.
+ */
 
 #define BLEN (4096 << 0)
 #define BATCH_SIZE 8
