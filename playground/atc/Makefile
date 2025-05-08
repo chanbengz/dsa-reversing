@@ -8,10 +8,10 @@ EXES = $(patsubst %.c, %, $(SRCS))
 buildall: $(EXES)
 
 run: $(TARGET).c build
-	./build/$(TARGET)
+	sudo ./build/$(TARGET)
 
 debug: $(TARGET).c build
-	gdb ./build/$(TARGET)
+	sudo gdb ./build/$(TARGET)
 
 build: $(TARGET).c
 	$(CC) $(TARGET).c -o build/$(TARGET) $(CFLAGS) $(LDFLAGS) -g

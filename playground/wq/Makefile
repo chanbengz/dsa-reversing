@@ -9,13 +9,11 @@ build: $(EXES)
 
 run: $(TARGET).c
 	$(CC) $(TARGET).c -o build/$(TARGET) $(CFLAGS) $(LDFLAGS)
-	# sudo setcap cap_sys_rawio+ep ./build/$(TARGET)
-	./build/$(TARGET)
+	sudo ./build/$(TARGET)
 
 debug: $(TARGET).c
 	$(CC) $(TARGET).c -o build/$(TARGET) $(CFLAGS) $(LDFLAGS) -g
-	sudo setcap cap_sys_rawio+ep ./build/$(TARGET)
-	gdb ./build/$(TARGET)
+	sudo gdb ./build/$(TARGET)
 
 $(EXES):%:%.c $(DEPS)
 	$(CC) -o build/$@ $< $(CFLAGS) $(LDFLAGS)

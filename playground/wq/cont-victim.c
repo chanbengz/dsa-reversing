@@ -32,7 +32,6 @@ static inline void submit_desc_check(void *wq_portal, struct dsa_hw_desc *hw)
 }
 
 int submit_wd(void* src, void *dst) {
-    /*printf("src: %p, dst: %p, char: %c\n", src, dst, *(char *)src);*/
     int rc;
     struct dsa_hw_desc desc = {};
     struct dsa_completion_record comp __attribute__((aligned(32))) = {};
@@ -82,7 +81,6 @@ retry:
         }
     } else {
         rc = memcmp(src, dst, BLEN);
-        // rc ? printf("memmove failed: %d\n", rc) : printf("memmove successful\n");
         rc = rc ? EXIT_FAILURE : EXIT_SUCCESS;
     }
 

@@ -1,6 +1,7 @@
 # DSA Reversing
 
-This repos holds for artifacts of <paper-title>.
+This repos holds artifact of the paper
+"Data Stealth Assassin: Side-Channel Attacks on Intel Data Streaming Accelerator".
 
 ## Getting Started
 

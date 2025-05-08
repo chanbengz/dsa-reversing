@@ -1,7 +1,4 @@
 #include "dsa.h"
-#include <stdint.h>
-#include <sys/types.h>
-
 #define BLEN (4096ull << 26) // 256GB
 #define DSA_OP_FLAG_US (1 << 16)
 
