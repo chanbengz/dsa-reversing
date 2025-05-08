@@ -1,5 +1,4 @@
 #include "dsa.h"
-#define TESTS_PER_PROFILE 1
 #define BLEN (4096ull << 26) // 256GB
 #define DSA_OP_FLAG_US (1 << 16)
 
@@ -9,12 +8,7 @@ struct dsa_hw_desc desc = {};
 struct dsa_completion_record comp_onbss __attribute__((aligned(32))) = {};
 int probe_count = 0;
 
-
-#define TESTS_PER_PROBE 8
 #define WARMUP_TESTS 10000
-#define START_OFFSET 24
-#define MAX_OFFSET 37
-uint64_t results[MAX_OFFSET + 1][TESTS_PER_PROBE + 1];
 
 int main(int argc, char *argv[])
 {
@@ -55,24 +49,8 @@ int main(int argc, char *argv[])
             break;
 
         default:
-            for (int j = 0; j < TESTS_PER_PROBE; j++) {
-                for (int i = START_OFFSET; i <= MAX_OFFSET; i++) {
-                    probe(base);
-                    results[i][j] = probe(base + (1L << i));
-                    probe(base);
-                }
-            }
-
-            // ----- header
-            for (int i = START_OFFSET; i <= MAX_OFFSET; i++) printf("| %4d ", i); printf("|\n");
-            for (int i = START_OFFSET; i <= MAX_OFFSET; i++) printf("|------");   printf("|\n");
-            // ----- body
-            for (int j = 0; j < TESTS_PER_PROBE; j++) {
-                for (int i = START_OFFSET; i <= MAX_OFFSET; i++) printf("| %4ld ", results[i][j]);
-                printf("|\n");
-            }
-            printf("probe_count: %d\n", probe_count);
-            break;
+            printf("Usage: %s [sleep_time]\n", argv[0]);
+            return EXIT_FAILURE;
     }
 
     return 0;

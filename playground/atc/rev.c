@@ -12,7 +12,7 @@ struct dsa_hw_desc desc = {};
 int probe_count = 0;
 
 
-#define WARMUP_TESTS 10000
+#define WARMUP_TESTS 2
 #define TESTS_PER_PROBE 10000
 #define MAX_OFFSET 33
 #define EVCTION_SETS 2
@@ -29,16 +29,11 @@ int main(int argc, char *argv[])
 
     // Warm up
     void* base = probe_arr;
-    uint64_t miss_t = 0, hit_t = 0;
     for (int i = 0; i < WARMUP_TESTS; i++) {
-        probe(base); probe(arr_onstack); probe(arr_onbss);
-        miss_t += probe(base);
-        hit_t += probe(base);
+        probe(base);
+        probe(arr_onstack); 
+        probe(arr_onbss);
     }
-
-    // Benchmarking ATC
-    printf("Cache miss: %ld\n", miss_t / WARMUP_TESTS);
-    printf("Cache hit:  %ld\n", hit_t  / WARMUP_TESTS);
 
     if (argc != 2) {
         printf("Usage: %s <0: offset, 1: addr, 2: evict>\n", argv[0]);
@@ -51,6 +46,7 @@ int main(int argc, char *argv[])
     uint64_t result = 0;
 
     switch (atoi(argv[1])) {
+        // Experiment 1: Latency introduced by eviction
         case 0:
             for (int i = 0; i < TESTS_PER_PROBE; i++) {
                 first_t += probe(base); // hit
@@ -61,6 +57,7 @@ int main(int argc, char *argv[])
             printf("offset    : %ld\n", second_t / TESTS_PER_PROBE);
             printf("base addr : %ld\n", third_t / TESTS_PER_PROBE);
             break;
+        // Experiment 2: Latency in different locations (and eviction)
         case 1: 
             for (int i = 0; i < TESTS_PER_PROBE; i++) {
                 results[0] += probe(arr_onstack);
@@ -73,6 +70,7 @@ int main(int argc, char *argv[])
             printf("%p: %ld\n", &arr_onbss, results[2] / TESTS_PER_PROBE);
             printf("%p: %ld\n", base, results[3] / TESTS_PER_PROBE);
             break;
+        // Experiment 3: Trial of second level DevTLB
         case 2:
             for (int i = 0; i < TESTS_PER_PROBE; i++) {
                 for (int j = 0; j < EVCTION_SETS; j++) probe(base + (4096L << j));
