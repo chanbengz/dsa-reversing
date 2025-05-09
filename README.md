@@ -15,7 +15,7 @@ The following command do output something.
 # check if DSA is enabled
 sudo dmesg | grep "idxd "
 sudo lspci | grep 0b25
-sudo lspci -vvv -s 6a:01.0 
+sudo lspci -vvv -s 6a:01.0
 # check if VT-d is supported
 cat /sys/bus/dsa/devices/dsa0/pasid_enabled
 ```
@@ -38,29 +38,20 @@ sudo chmod 766 /dev/dsa/*
 
 ## Playing with DSA
 
-`playground` holds the experiment sources.
-For example, in `playground/wq` we explored the work queue in DSA,
-run them by
+`playground` holds the experiment sources. For example, in `playground/wq`
+we explored the work queue in DSA, run them by
 
 ```bash
 cd playground/wq && mkdir -p build
-make run TARGET=<target-file-without-.c>
-
-# debug
-make debug TARGET=<target-file-without-.c>
+# or playground/stc
+make buildall
 ```
 
-In `playgroundatc`, we tested the internal structure of ATC (also known as Device TLB)
-as part of DSA device. You can run it by
-
-```bash
-cd playground/atc && mkdir -p build
-# same as above
-```
+See [playground/README.md](playground/README.md) for more details.
 
 ## Attack
 
-See [attack/README.md](attack/README.md) or [attack-rs/README.md](attack-rs/README.md).
+See [attack/README.md](attack/README.md) for attack experiments.
 
 ## Issues
 
