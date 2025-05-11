@@ -5,8 +5,7 @@
 
 #define BLEN (4096 << 0)
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     char src[BLEN + 2], dst[BLEN];
     memset(src, 0x41, BLEN + 2);
     submit_wd(src, dst);
@@ -15,7 +14,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-int submit_wd(void* src, void *dst) {
+int submit_wd(void *src, void *dst) {
     struct dsa_hw_desc desc = {};
     struct dsa_completion_record comp __attribute__((aligned(32))) = {};
     uint32_t tlen, rc;
@@ -25,10 +24,10 @@ int submit_wd(void* src, void *dst) {
     if (rc) return EXIT_FAILURE;
 
     desc.opcode = DSA_OPCODE_MEMMOVE;
-    desc.flags  = IDXD_OP_FLAG_RCR | IDXD_OP_FLAG_CRAV;
+    desc.flags = IDXD_OP_FLAG_RCR | IDXD_OP_FLAG_CRAV;
     desc.xfer_size = BLEN + 1;
-    desc.src_addr = (uintptr_t) src;
-    desc.dst_addr = (uintptr_t) dst;
+    desc.src_addr = (uintptr_t)src;
+    desc.dst_addr = (uintptr_t)dst;
     desc.completion_addr = (uintptr_t)&comp;
 
 retry:
@@ -36,10 +35,9 @@ retry:
         submit_desc(wq_info.wq_portal, &desc);
     } else {
         int rc = write(wq_info.wq_fd, &desc, sizeof(desc));
-        if (rc != sizeof(desc))
-        return EXIT_FAILURE;
+        if (rc != sizeof(desc)) return EXIT_FAILURE;
     }
-    
+
     // polling for completion
     while (comp.status == 0);
 

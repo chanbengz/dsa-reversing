@@ -2,7 +2,7 @@
 #define BLEN (4096ull << 26) // 256GB
 #define DSA_OP_FLAG_US (1 << 16)
 
-struct dsa_completion_record* probe_arr;
+struct dsa_completion_record *probe_arr;
 struct wq_info wq_info;
 struct dsa_hw_desc desc = {};
 struct dsa_completion_record comp_onbss __attribute__((aligned(32))) = {};
@@ -10,8 +10,7 @@ int probe_count = 0;
 
 #define WARMUP_TESTS 10000
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     if (argc > 3) {
         printf("Usage: %s [sleep_time]\n", argv[0]);
         return EXIT_FAILURE;
@@ -26,53 +25,53 @@ int main(int argc, char *argv[])
     desc.flags = IDXD_OP_FLAG_CRAV | IDXD_OP_FLAG_RCR;
 
     // Benchmarking ATC
-    void* base = probe_arr;
+    void *base = probe_arr;
     uint64_t miss_t = 0, hit_t = 0;
     for (int i = 0; i < WARMUP_TESTS; i++) {
         // eviction
-        probe(base); probe(&comp_onbss); probe(&comp_onstack);
+        probe(base);
+        probe(&comp_onbss);
+        probe(&comp_onstack);
         miss_t += probe(base);
         hit_t += probe(base);
     }
     printf("Cache miss: %ld\n", miss_t / WARMUP_TESTS);
-    printf("Cache hit:  %ld\n", hit_t  / WARMUP_TESTS);
+    printf("Cache hit:  %ld\n", hit_t / WARMUP_TESTS);
 
     // Different tests
     switch (argc) {
-        case 2:
-            probe(base); // let base be in cache
-            printf("Sleeping %s seconds\n", argv[1]);
-            printf("start: %ld\n", probe(base));
-            sleep(atoi(argv[1]));
-            __builtin_ia32_lfence();
-            printf("end:   %ld\n", probe(base));
-            break;
+    case 2:
+        probe(base); // let base be in cache
+        printf("Sleeping %s seconds\n", argv[1]);
+        printf("start: %ld\n", probe(base));
+        sleep(atoi(argv[1]));
+        __builtin_ia32_lfence();
+        printf("end:   %ld\n", probe(base));
+        break;
 
-        default:
-            printf("Usage: %s [sleep_time]\n", argv[0]);
-            return EXIT_FAILURE;
+    default:
+        printf("Usage: %s [sleep_time]\n", argv[0]);
+        return EXIT_FAILURE;
     }
 
     return 0;
 }
 
-
-uint64_t probe(void* addr)
-{
+uint64_t probe(void *addr) {
     probe_count++;
     uint64_t start, end, retry = 0, ret = 0;
-    struct dsa_completion_record* comp = (struct dsa_completion_record*) addr;
-    desc.completion_addr = (uintptr_t) comp;
+    struct dsa_completion_record *comp = (struct dsa_completion_record *)addr;
+    desc.completion_addr = (uintptr_t)comp;
     memset(comp, 0, 8);
 
-resubmit: 
+resubmit:
     // enqcmd(wq_info.wq_portal, &desc);
     write(wq_info.wq_fd, &desc, sizeof(desc));
     start = rdtsc();
     while (comp->status == 0 && retry++ < MAX_COMP_RETRY) {
         umonitor(&(comp));
         if (comp->status == 0) {
-        uint64_t delay = __rdtsc() + UMWAIT_DELAY;
+            uint64_t delay = __rdtsc() + UMWAIT_DELAY;
             umwait(UMWAIT_STATE_C0_1, delay);
         }
     }
@@ -80,7 +79,8 @@ resubmit:
     ret += end - start;
 
     if (comp->status != DSA_COMP_SUCCESS) {
-        printf("Failed: %d Bytes Completed: %d\n", comp->status, comp->bytes_completed);
+        printf("Failed: %d Bytes Completed: %d\n", comp->status,
+               comp->bytes_completed);
         printf("Address: %p\n", (void *)comp->fault_addr);
         if (op_status(comp->status) == DSA_COMP_PAGE_FAULT_NOBOF) {
             int wr = comp->status & DSA_COMP_STATUS_WRITE;

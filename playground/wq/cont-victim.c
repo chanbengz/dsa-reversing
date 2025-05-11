@@ -7,8 +7,7 @@
 uint64_t fails = 0;
 struct wq_info wq_info;
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     printf("[victim] starts, BLEN: %d\n", BLEN);
     char *src = malloc(BLEN), *dst = malloc(BLEN);
     srand(114514LL);
@@ -17,44 +16,41 @@ int main(int argc, char *argv[])
     if (rc) return EXIT_FAILURE;
 
     for (int i = 0; i < TEST_NUM; i++) {
-        fails = 0; memset(src, rand(), BLEN);
+        fails = 0;
+        memset(src, rand(), BLEN);
         int result = submit_wd(src, dst);
-        fails ? printf("[victim] Submission failures: %ld\n", fails) \
+        fails ? printf("[victim] Submission failures: %ld\n", fails)
               : printf("[victim] Submission successful\n");
     }
 
     return 0;
 }
 
-static inline void submit_desc_check(void *wq_portal, struct dsa_hw_desc *hw)
-{
-    while (enqcmd(wq_portal, hw)) fails++; 
+static inline void submit_desc_check(void *wq_portal, struct dsa_hw_desc *hw) {
+    while (enqcmd(wq_portal, hw)) fails++;
 }
 
-int submit_wd(void* src, void *dst) {
+int submit_wd(void *src, void *dst) {
     int rc;
     struct dsa_hw_desc desc = {};
     struct dsa_completion_record comp __attribute__((aligned(32))) = {};
-    
+
     // prepare descriptor
     desc.opcode = DSA_OPCODE_MEMMOVE;
-    desc.flags = IDXD_OP_FLAG_RCR  \
-               | IDXD_OP_FLAG_CRAV \
-               | IDXD_OP_FLAG_CC;
+    desc.flags = IDXD_OP_FLAG_RCR | IDXD_OP_FLAG_CRAV | IDXD_OP_FLAG_CC;
     desc.xfer_size = BLEN;
-    desc.src_addr = (uintptr_t) src;
-    desc.dst_addr = (uintptr_t) dst;
-    desc.completion_addr = (uintptr_t) &comp;
+    desc.src_addr = (uintptr_t)src;
+    desc.dst_addr = (uintptr_t)dst;
+    desc.completion_addr = (uintptr_t)&comp;
 
 retry:
     if (wq_info.wq_mapped) {
         submit_desc_check(wq_info.wq_portal, &desc);
     } else {
         int rc = write(wq_info.wq_fd, &desc, sizeof(desc));
-        if (rc != sizeof(desc))
-        return EXIT_FAILURE;
+        if (rc != sizeof(desc)) return EXIT_FAILURE;
     }
-    
+
     int retry = 0;
     while (comp.status == 0 && retry++ < MAX_COMP_RETRY) {
         umonitor(&comp);
