@@ -20,8 +20,13 @@ Next, we
 Those experiments below proved that some of our hypothesis are wrong,
 or they do not concern the paper, so they are deprecated.
 
-- [Constant Time Test](./cmp-flush.c) Test `Compare` and `Flush` to see if they are implemented in constant time. Experiment showed that `Compare` is constant time, but `Flush` is not. Using `Flush` to implement Flush+Reload and Flush+Flush is the same as using `clflush` but could be less accurate and slower.
-- [Out of Bound Read/Write](./bound.c) Try `Memmory Move` with out-of-bound accesses. Results showed that it is possible to read/write memory outside of the buffer, similar to libc's `memcpy`.
+- [Constant Time Test](./cmp-flush.c) Test `Compare` and `Flush` to see if they 
+are implemented in constant time. Experiment showed that `Compare` is constant time,
+but `Flush` is not. Using `Flush` to implement Flush+Reload and Flush+Flush is the
+same as using `clflush` but could be less accurate and slower.
+- [Out of Bound Read/Write](./bound.c) Try `Memmory Move` with out-of-bound accesses. 
+Results showed that it is possible to read/write memory outside of the buffer, similar
+ to libc's `memcpy`.
 
 ## Reverse Engineering ATC
 
@@ -31,7 +36,6 @@ atc
 ├── dsa.h
 ├── gao.c
 ├── Makefile
-├── README.md
 ```
 
 ### Perfmon

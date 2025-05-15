@@ -1,53 +1,59 @@
 #include "dsa.h"
-#include <stdio.h>
 
-#define BLEN (4096 << 0)
+#define BLEN (4096)
+#define XFER_SIZE 8
 #define TEST_NUM 8
-
-uint64_t fails = 0;
 struct wq_info wq_info;
 
 int main(int argc, char *argv[]) {
-    printf("[victim] starts, BLEN: %d\n", BLEN);
-    char *src = malloc(BLEN), *dst = malloc(BLEN);
+    char *src = malloc(BLEN), *dst = malloc(BLEN * 3);
     srand(114514LL);
 
-    int rc = map_wq(&wq_info);
-    if (rc) return EXIT_FAILURE;
+    if (map_wq(&wq_info)) return EXIT_FAILURE;
 
-    for (int i = 0; i < TEST_NUM; i++) {
-        fails = 0;
-        memset(src, rand(), BLEN);
-        int result = submit_wd(src, dst);
-        fails ? printf("[victim] Submission failures: %ld\n", fails)
-              : printf("[victim] Submission successful\n");
+    // if BLEN = 4096, we show that read/write are using different pages/caches
+    if (BLEN < 4096 &&
+        ((uintptr_t)src & (~0xFFF)) != ((uintptr_t)dst & (~0xFFF))) {
+        printf("src and dst are not in the same page\n");
+        return EXIT_FAILURE;
     }
 
-    return 0;
-}
+    memset(src, rand(), BLEN);
+    memset(dst, 0, BLEN * 3);
 
-static inline void submit_desc_check(void *wq_portal, struct dsa_hw_desc *hw) {
-    while (enqcmd(wq_portal, hw)) fails++;
+    int rc = submit_wd(src, dst);
+    rc |= submit_wd(src, dst + BLEN); // hit twice
+    rc |= submit_wd(src, dst);        // hit twice
+    rc |= submit_wd(src, dst);        // hit 3 times
+
+    return rc;
 }
 
 int submit_wd(void *src, void *dst) {
-    int rc;
     struct dsa_hw_desc desc = {};
-    struct dsa_completion_record comp __attribute__((aligned(32))) = {};
+    struct dsa_completion_record comp __attribute__((aligned(32)));
+
+    if (((uintptr_t)src & (~0xFFF)) == ((uintptr_t)dst & (~0xFFF)) ||
+        ((uintptr_t)src & (~0xFFF)) == ((uintptr_t)(&comp) & (~0xFFF))) {
+        printf("They cannot be in the sage paeg");
+        return 1;
+    }
 
     // prepare descriptor
+    comp.status = 0;
     desc.opcode = DSA_OPCODE_MEMMOVE;
     desc.flags = IDXD_OP_FLAG_RCR | IDXD_OP_FLAG_CRAV | IDXD_OP_FLAG_CC;
-    desc.xfer_size = BLEN;
+    desc.xfer_size = XFER_SIZE;
     desc.src_addr = (uintptr_t)src;
     desc.dst_addr = (uintptr_t)dst;
     desc.completion_addr = (uintptr_t)&comp;
 
+    int rc;
 retry:
     if (wq_info.wq_mapped) {
-        submit_desc_check(wq_info.wq_portal, &desc);
+        submit_desc(wq_info.wq_portal, &desc);
     } else {
-        int rc = write(wq_info.wq_fd, &desc, sizeof(desc));
+        rc = write(wq_info.wq_fd, &desc, sizeof(desc));
         if (rc != sizeof(desc)) return EXIT_FAILURE;
     }
 
@@ -62,7 +68,7 @@ retry:
 
     if (comp.status != DSA_COMP_SUCCESS) {
         if (op_status(comp.status) == DSA_COMP_PAGE_FAULT_NOBOF) {
-            // continue to finish the rest
+            printf("Page fault\n");
             int wr = comp.status & DSA_COMP_STATUS_WRITE;
             volatile char *t;
             t = (char *)comp.fault_addr;
@@ -72,11 +78,11 @@ retry:
             desc.xfer_size -= comp.bytes_completed;
             goto retry;
         } else {
-            printf("[error] desc failed status %u\n", comp.status);
+            printf("[error] desc failed status 0x%x\n", comp.status);
             rc = EXIT_FAILURE;
         }
     } else {
-        rc = memcmp(src, dst, BLEN);
+        rc = memcmp(src, dst, XFER_SIZE);
         rc = rc ? EXIT_FAILURE : EXIT_SUCCESS;
     }
 

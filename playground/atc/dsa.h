@@ -1,16 +1,16 @@
+#include <accel-config/libaccel_config.h>
+#include <fcntl.h>
+#include <linux/idxd.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <sys/cdefs.h>
-#include <unistd.h>
 #include <stdlib.h>
-#include <fcntl.h>
 #include <string.h>
+#include <sys/cdefs.h>
 #include <sys/mman.h>
 #include <sys/types.h>
-#include <linux/idxd.h>
-#include <xmmintrin.h>
+#include <unistd.h>
 #include <x86intrin.h>
-#include <accel-config/libaccel_config.h>
+#include <xmmintrin.h>
 
 #define NOP_RETRY 10000
 #define MAX_COMP_RETRY 2000000000
@@ -24,28 +24,26 @@ struct wq_info {
     int wq_fd;
 };
 
-uint64_t probe(void* addr);
+uint64_t probe(void *addr);
 
-static inline int enqcmd(volatile void *reg, struct dsa_hw_desc *desc)
-{
+static inline int enqcmd(volatile void *reg, struct dsa_hw_desc *desc) {
     uint8_t retry;
-    asm volatile (".byte 0xf2, 0x0f, 0x38, 0xf8, 0x02\t\n"
-                  "setz %0\t\n":"=r" (retry):"a"(reg), "d"(desc));
+    asm volatile(".byte 0xf2, 0x0f, 0x38, 0xf8, 0x02\t\n"
+                 "setz %0\t\n"
+                 : "=r"(retry)
+                 : "a"(reg), "d"(desc));
     return (int)retry;
 }
 
-static inline void submit_desc(void *wq_portal, struct dsa_hw_desc *hw)
-{
+static inline void submit_desc(void *wq_portal, struct dsa_hw_desc *hw) {
     while (enqcmd(wq_portal, hw)) _mm_pause();
 }
 
-static uint8_t op_status(uint8_t status)
-{
+static uint8_t op_status(uint8_t status) {
     return status & DSA_COMP_STATUS_MASK;
 }
 
-static bool is_write_syscall_success(int fd)
-{
+static bool is_write_syscall_success(int fd) {
     struct dsa_hw_desc desc = {0};
     struct dsa_completion_record comp __attribute__((aligned(32)));
     int retry = 0, rc;
@@ -58,14 +56,12 @@ static bool is_write_syscall_success(int fd)
     rc = write(fd, &desc, sizeof(desc));
     if (rc == sizeof(desc)) {
         while (comp.status == 0 && retry++ < NOP_RETRY) _mm_pause();
-        if (comp.status == DSA_COMP_SUCCESS)
-            return true;
+        if (comp.status == DSA_COMP_SUCCESS) return true;
     }
     return false;
 }
 
-static int map_wq(struct wq_info *wq_info)
-{
+static int map_wq(struct wq_info *wq_info) {
     void *wq_portal;
     struct accfg_ctx *ctx;
     struct accfg_wq *wq;
@@ -87,7 +83,7 @@ static int map_wq(struct wq_info *wq_info)
              * ACCFG_WQT_USER and desired mode
              */
             wq_found = accfg_wq_get_type(wq) == ACCFG_WQT_USER &&
-            accfg_wq_get_mode(wq) == ACCFG_WQ_SHARED;
+                       accfg_wq_get_mode(wq) == ACCFG_WQ_SHARED;
             if (wq_found) break;
         }
         if (wq_found) break;
@@ -97,7 +93,8 @@ static int map_wq(struct wq_info *wq_info)
 
     fd = open(path, O_RDWR);
     if (fd >= 0) {
-        wq_portal = mmap(NULL, 0x1000, PROT_WRITE, MAP_SHARED | MAP_POPULATE, fd, 0);
+        wq_portal =
+            mmap(NULL, 0x1000, PROT_WRITE, MAP_SHARED | MAP_POPULATE, fd, 0);
     }
     if (wq_portal == MAP_FAILED) {
         /*
@@ -133,18 +130,16 @@ static __always_inline void umonitor(void *addr) {
     asm volatile(".byte 0xf3, 0x48, 0x0f, 0xae, 0xf0" : : "a"(addr));
 }
 
-static __always_inline unsigned char
-umwait(unsigned int state, unsigned long long timeout) {
+static __always_inline unsigned char umwait(unsigned int state,
+                                            unsigned long long timeout) {
     uint8_t r;
     uint32_t timeout_low = (uint32_t)timeout;
     uint32_t timeout_high = (uint32_t)(timeout >> 32);
-    asm volatile(
-        ".byte 0xf2, 0x48, 0x0f, 0xae, 0xf1\t\n"
-        "setc %0\t\n" :
-        "=r"(r) :
-        "c"(state), "a"(timeout_low), "d"(timeout_high)
-    );
+    asm volatile(".byte 0xf2, 0x48, 0x0f, 0xae, 0xf1\t\n"
+                 "setc %0\t\n"
+                 : "=r"(r)
+                 : "c"(state), "a"(timeout_low), "d"(timeout_high));
     return r;
 }
 
-int submit_wd(void*, void*);
+int submit_wd(void *, void *);
