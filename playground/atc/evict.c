@@ -1,7 +1,8 @@
 #include "dsa.h"
+#include <fcntl.h>
 #include <linux/idxd.h>
 #define TESTS_PER_PROFILE 1
-#define BLEN (4096ull << 26) // 256GB
+#define BLEN (4096ull << 12)
 #define DSA_OP_FLAG_US (1 << 16)
 
 struct dsa_completion_record *probe_arr;
@@ -31,10 +32,26 @@ int map_another_wq(struct wq_info *wq_info) {
     return 0;
 }
 
+const int HUGE_ENABLE = 1;
+
 int main(int argc, char *argv[]) {
-    struct dsa_completion_record arr_onstack __attribute__((aligned(32))) = {};
-    probe_arr = (struct dsa_completion_record *)aligned_alloc(32, BLEN);
-    memset(probe_arr, 0, BLEN >> 10);
+    if (!HUGE_ENABLE) {
+        probe_arr = (struct dsa_completion_record *)aligned_alloc(32, BLEN);
+        memset(probe_arr, 0, BLEN >> 10);
+    } else {
+        int fd = open("/mnt/huge/hugepage1", O_CREAT|O_RDWR);
+        if (fd == -1) {
+            perror("huge page failed");
+            return EXIT_FAILURE;
+        }
+        probe_arr = (struct dsa_completion_record *)
+            mmap(0, (2 << 20), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+        if (probe_arr == MAP_FAILED) {
+            perror("mmap failed");
+            close(fd);
+            return EXIT_FAILURE;
+        }
+    }
 
     if (argc != 2) {
         printf("Usage: %s <another wq ? 0 : 1>\n", argv[0]);
@@ -48,7 +65,6 @@ int main(int argc, char *argv[]) {
     }
 
     probe(probe_arr);
-    // probe(&arr_onstack);
     // probe(&arr_onbss);
 
     return 0;
@@ -64,8 +80,9 @@ uint64_t probe(void *addr) {
     memset(comp, 0, 8);
 
 resubmit:
-    // enqcmd(wq_info.wq_portal, &desc);
-    write(wq_info.wq_fd, &desc, sizeof(desc));
+    if (wq_info.wq_mapped) enqcmd(wq_info.wq_portal, &desc);
+    else write(wq_info.wq_fd, &desc, sizeof(desc));
+
     start = rdtsc();
     while (comp->status == 0 && retry++ < MAX_COMP_RETRY) {
         umonitor(&(comp));
