@@ -5,7 +5,9 @@ DEPS = dsa.h
 SRCS = $(wildcard *.c)  
 EXES = $(patsubst %.c, %, $(SRCS))
 
-buildall: $(EXES)
+covert:
+	$(CC) cc_sender.c -o build/cc_sender $(CFLAGS) $(LDFLAGS)
+	$(CC) cc_receiver.c -o build/cc_receiver $(CFLAGS) $(LDFLAGS)
 
 run: build
 	./build/$(TARGET)
@@ -18,10 +20,7 @@ build: $(TARGET).c
 	# sudo setcap cap_sys_rawio+ep ./build/$(TARGET)
 	# disable this for now because it's not needed for the attack
 
-$(EXES):%:%.c $(DEPS)
-	$(CC) -o build/$@ $< $(CFLAGS) $(LDFLAGS)
-
 clean:
 	rm -rf build
 
-.PHONY: run clean build 
+.PHONY: run clean build covert
