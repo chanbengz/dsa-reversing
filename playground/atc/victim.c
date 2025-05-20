@@ -65,8 +65,11 @@ uint64_t probe(void *addr) {
     memset(comp, 0, 8);
 
 resubmit:
-    // enqcmd(wq_info.wq_portal, &desc);
-    write(wq_info.wq_fd, &desc, sizeof(desc));
+    if (wq_info.wq_mapped)
+        enqcmd(wq_info.wq_portal, &desc);
+    else
+        write(wq_info.wq_fd, &desc, sizeof(desc));
+
     start = rdtsc();
     while (comp->status == 0 && retry++ < MAX_COMP_RETRY) {
         umonitor(&(comp));

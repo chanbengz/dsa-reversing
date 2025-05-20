@@ -66,30 +66,9 @@ static int map_wq(struct wq_info *wq_info) {
     struct accfg_ctx *ctx;
     struct accfg_wq *wq;
     struct accfg_device *device;
-    char path[PATH_MAX];
+    char path[PATH_MAX] = "/dev/dsa/wq2.0";
     int fd;
-    int wq_found;
     wq_portal = MAP_FAILED;
-    accfg_new(&ctx);
-    accfg_device_foreach(ctx, device) {
-        /*
-         * Use accfg_device_(*) functions to select enabled device
-         * based on name, numa node
-         */
-        accfg_wq_foreach(device, wq) {
-            if (accfg_wq_get_user_dev_path(wq, path, sizeof(path))) continue;
-            /*
-             * Use accfg_wq_(*) functions select WQ of type
-             * ACCFG_WQT_USER and desired mode
-             */
-            wq_found = accfg_wq_get_type(wq) == ACCFG_WQT_USER &&
-                       accfg_wq_get_mode(wq) == ACCFG_WQ_SHARED;
-            if (wq_found) break;
-        }
-        if (wq_found) break;
-    }
-    accfg_unref(ctx);
-    if (!wq_found) return -ENODEV;
 
     fd = open(path, O_RDWR);
     if (fd >= 0) {

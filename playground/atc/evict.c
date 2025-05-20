@@ -14,7 +14,7 @@ struct dsa_hw_desc desc = {};
 uint64_t results[MAX_OFFSET + 1][TESTS_PER_PROBE];
 
 int map_another_wq(struct wq_info *wq_info) {
-    int fd = open("/dev/dsa/wq0.1", O_RDWR);
+    int fd = open("/dev/dsa/wq2.1", O_RDWR);
     void *wq_portal =
         mmap(NULL, 0x1000, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (wq_portal == MAP_FAILED) {
@@ -41,11 +41,11 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (atoi(argv[1]) == 1)
-        if (map_wq(&wq_info))
-            return EXIT_FAILURE;
-        else if (map_another_wq(&wq_info))
-            return EXIT_FAILURE;
+    if (atoi(argv[1]) == 1) {
+        if (map_wq(&wq_info)) return EXIT_FAILURE;
+    } else {
+        if (map_another_wq(&wq_info)) return EXIT_FAILURE;
+    }
 
     probe(probe_arr);
     // probe(&arr_onstack);
