@@ -6,7 +6,8 @@ This repos holds artifact of the paper
 ## Getting Started
 
 > [!NOTE]
-> We recommend using Ubuntu 24.04 LTS and Intel Xeon Scalable for this experiment.
+> This experiment requires Ubuntu 24.04 LTS and Intel 4th Gen Xeon Scalable (or newer) who
+> has DSA integration.
 
 Make sure the driver of DSA and IOMMU is properly installed and enabled during bootup.
 The following command do output something.
@@ -38,8 +39,8 @@ sudo chmod 766 /dev/dsa/*
 
 ## Playing with DSA
 
-`playground` holds the experiment sources. For example, in `playground/wq`
-we explored the work queue in DSA, run them by
+`playground` holds the experiment sources. For example, in `playground/wq` we explored the
+work queue in DSA, run them by
 
 ```bash
 cd playground/wq && mkdir -p build
@@ -56,7 +57,6 @@ See [attack/README.md](attack/README.md) for attack experiments.
 ## Issues
 
 If you encounter any issue, please see [ISSUE.md](ISSUE.md) first.
-
 Open an issue if it doesn't help.
 
 ## Reference

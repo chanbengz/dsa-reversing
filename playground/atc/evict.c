@@ -15,7 +15,7 @@ struct dsa_hw_desc desc = {};
 uint64_t results[MAX_OFFSET + 1][TESTS_PER_PROBE];
 
 int map_another_wq(struct wq_info *wq_info) {
-    int fd = open("/dev/dsa/wq2.1", O_RDWR);
+    int fd = open("/dev/dsa/wq0.1", O_RDWR);
     void *wq_portal =
         mmap(NULL, 0x1000, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (wq_portal == MAP_FAILED) {
@@ -32,20 +32,20 @@ int map_another_wq(struct wq_info *wq_info) {
     return 0;
 }
 
-const int HUGE_ENABLE = 1;
+const int HUGE_ENABLE = 0;
 
 int main(int argc, char *argv[]) {
     if (!HUGE_ENABLE) {
         probe_arr = (struct dsa_completion_record *)aligned_alloc(32, BLEN);
         memset(probe_arr, 0, BLEN >> 10);
     } else {
-        int fd = open("/mnt/huge/hugepage1", O_CREAT|O_RDWR);
+        int fd = open("/mnt/huge/hugepage1", O_CREAT | O_RDWR);
         if (fd == -1) {
             perror("huge page failed");
             return EXIT_FAILURE;
         }
-        probe_arr = (struct dsa_completion_record *)
-            mmap(0, (2 << 20), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+        probe_arr = (struct dsa_completion_record *)mmap(
+            0, (2 << 20), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
         if (probe_arr == MAP_FAILED) {
             perror("mmap failed");
             close(fd);
@@ -80,8 +80,10 @@ uint64_t probe(void *addr) {
     memset(comp, 0, 8);
 
 resubmit:
-    if (wq_info.wq_mapped) enqcmd(wq_info.wq_portal, &desc);
-    else write(wq_info.wq_fd, &desc, sizeof(desc));
+    if (wq_info.wq_mapped)
+        enqcmd(wq_info.wq_portal, &desc);
+    else
+        write(wq_info.wq_fd, &desc, sizeof(desc));
 
     start = rdtsc();
     while (comp->status == 0 && retry++ < MAX_COMP_RETRY) {
