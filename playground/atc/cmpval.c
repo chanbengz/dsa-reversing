@@ -1,6 +1,4 @@
 #include "dsa.h"
-#include <stdlib.h>
-#include <string.h>
 
 #define BLEN (4096ull << 10)
 #define TESTS 100000
