@@ -101,14 +101,14 @@ uint64_t probe(void *addr) {
     probe_count++;
     uint64_t start, end, retry = 0, ret = 0;
     struct dsa_completion_record *comp = (struct dsa_completion_record *)addr;
-    desc.completion_addr = (uintptr_t)comp;
+    desc.completion_addr = (uintptr_t) comp;
     memset(comp, 0, 8);
 
 resubmit:
     enqcmd(wq_info.wq_portal, &desc);
     start = rdtsc();
     while (comp->status == 0 && retry++ < MAX_COMP_RETRY) {
-        umonitor(&(comp));
+        umonitor(comp);
         if (comp->status == 0) {
             uint64_t delay = __rdtsc() + UMWAIT_DELAY;
             umwait(UMWAIT_STATE_C0_1, delay);
