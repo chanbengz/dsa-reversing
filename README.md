@@ -1,7 +1,7 @@
 # DSA Reversing
 
-This repos holds artifact of the paper
-"Data Stealth Assassin: Side-Channel Attacks on Intel Data Streaming Accelerator".
+This repos holds the artifact of paper
+"Data Stealth Assassin: Exploiting Intel Data Streaming Accelerator in Side-Channel Attacks".
 
 ## Getting Started
 
@@ -64,3 +64,9 @@ Open an issue if it doesn't help.
 - Intel(R) Data Streaming Accelerator User Guide
 - Intel(R) Data Streaming Accelerator Architecuture Specification
 - https://github.com/intel/dsa-perf-micros
+
+## Disclaimer
+
+We provide this code as-is, with academic purpose only.
+You are responsible for protecting yourself, your property and privacy.
+Any risks or damage caused by this code will not be covered.
