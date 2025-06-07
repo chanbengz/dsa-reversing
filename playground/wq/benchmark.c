@@ -7,6 +7,7 @@ uint64_t start;
 uint64_t submit = 0;
 uint64_t wait = 0;
 struct wq_info wq_info;
+struct dsa_hw_desc desc = {};
 
 int main(int argc, char *argv[]) {
     char *src = malloc((BLEN << TEST_NUM) * sizeof(char));
@@ -17,8 +18,6 @@ int main(int argc, char *argv[]) {
     if (map_wq(&wq_info)) return EXIT_FAILURE;
 
     // skip the first, since it results in TLB miss
-
-    struct dsa_hw_desc desc = {};
     struct dsa_completion_record comp __attribute__((aligned(32))) = {};
     comp.status = 0;
     desc.opcode = DSA_OPCODE_NOOP;
@@ -51,7 +50,6 @@ int main(int argc, char *argv[]) {
 
 inline int submit_wd(void *src, void *dst) {
     int retry = 0;
-    struct dsa_hw_desc desc = {};
     struct dsa_completion_record comp __attribute__((aligned(32))) = {};
 
     comp.status = 0;

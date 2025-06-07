@@ -5,10 +5,12 @@ DEPS = dsa.h
 SRCS = $(wildcard *.c)  
 EXES = $(patsubst %.c, %, $(SRCS))
 
-build: $(EXES)
+buildall: $(EXES)
 
-run: $(TARGET).c
+build: $(TARGET).c 
 	$(CC) $(TARGET).c -o build/$(TARGET) $(CFLAGS) $(LDFLAGS)
+
+run: $(TARGET).c build
 	sudo ./build/$(TARGET)
 
 debug: $(TARGET).c
