@@ -1,25 +1,23 @@
 #include "dsa.h"
 
-#define TEST_NUM 10
+#define TEST_NUM 18
 
 uint64_t BLEN = (4096ull << 0);
 uint64_t start;
 uint64_t submit = 0;
 uint64_t wait = 0;
 struct wq_info wq_info;
+struct dsa_hw_desc desc = {};
 
 int main(int argc, char *argv[]) {
     char *src = malloc((BLEN << TEST_NUM) * sizeof(char));
     char *dst = malloc((BLEN << TEST_NUM) * sizeof(char));
     memset(src, 0xCB, BLEN << TEST_NUM);
+    memset(dst, 0x00, BLEN << TEST_NUM);
 
     if (map_wq(&wq_info)) return EXIT_FAILURE;
 
     // skip the first, since it results in TLB miss
-    // fill up IOTLB
-    BLEN = (4096 << TEST_NUM);
-
-    struct dsa_hw_desc desc = {};
     struct dsa_completion_record comp __attribute__((aligned(32))) = {};
     comp.status = 0;
     desc.opcode = DSA_OPCODE_NOOP;
@@ -27,8 +25,11 @@ int main(int argc, char *argv[]) {
     desc.completion_addr = (uintptr_t)&comp;
     enqcmd(wq_info.wq_portal, &desc);
 
+    FILE *submit_file = fopen("submission.txt", "w");
+    FILE *wait_file = fopen("wait.txt", "w");
     while (comp.status == 0);
 
+    desc.opcode = DSA_OPCODE_MEMMOVE;
     for (int i = 0; i < TEST_NUM; i++) {
         BLEN = (4096 << i);
         submit = wait = 0;
@@ -37,22 +38,25 @@ int main(int argc, char *argv[]) {
         printf("[benchmark] BLEN:       %6ld bytes\n", BLEN);
         printf("[benchmark] submission: %6ld cycles\n", submit);
         printf("[benchmark] wait:       %6ld cycles\n", wait);
+        fprintf(submit_file, "%ld\n", submit);
+        fprintf(wait_file, "%ld\n", wait);
     }
 
+    fclose(submit_file);
+    fclose(wait_file);
+    
     return 0;
 }
 
 inline int submit_wd(void *src, void *dst) {
     int retry = 0;
-    struct dsa_hw_desc desc = {};
     struct dsa_completion_record comp __attribute__((aligned(32))) = {};
 
-    desc.opcode = DSA_OPCODE_MEMMOVE;
-    desc.flags = IDXD_OP_FLAG_RCR | IDXD_OP_FLAG_CRAV;
+    comp.status = 0;
     desc.xfer_size = BLEN;
-    desc.src_addr = (uintptr_t)src;
-    desc.dst_addr = (uintptr_t)dst;
-    desc.completion_addr = (uintptr_t)&comp;
+    desc.src_addr = (uintptr_t) src;
+    desc.dst_addr = (uintptr_t) dst;
+    desc.completion_addr = (uintptr_t) &comp;
 
 submit:
     memset(&comp, 0, sizeof(comp));

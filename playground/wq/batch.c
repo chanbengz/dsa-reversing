@@ -1,4 +1,6 @@
 #include "dsa.h"
+#include <linux/idxd.h>
+#include <stdio.h>
 
 /*
  * This experiment tests the QoS of batch and work descriptor submission.
@@ -27,6 +29,8 @@ void poll_batch() {
         }
     }
     ba_wait = rdtsc() - start;
+    if (batch_comp.status != DSA_COMP_SUCCESS) 
+        printf("batch failed with status: %d\n", batch_comp.status);
     printf("[batch] time elapsed: %ld\n", ba_wait);
 }
 
@@ -41,6 +45,8 @@ void poll_single() {
         }
     }
     wd_wait = rdtsc() - start;
+    if (comp.status != DSA_COMP_SUCCESS) 
+        printf("failed with status: %d\n", comp.status);
     printf("[single] time elapsed: %ld\n", wd_wait);
 }
 
@@ -49,6 +55,7 @@ int main(int argc, char *argv[]) {
     char *src1 = malloc(BLEN * BATCH_SIZE), *dst1 = malloc(BLEN * BATCH_SIZE);
     memset(src0, 0xCB, BLEN);
     memset(src1, 0xCB, BLEN * BATCH_SIZE);
+    memset(dst0, 0x00, BLEN);
     desc_buf = (struct dsa_hw_desc *)aligned_alloc(
         64, sizeof(struct dsa_hw_desc) * BATCH_SIZE);
     comp_buf = (struct dsa_completion_record *)aligned_alloc(
@@ -79,9 +86,16 @@ int main(int argc, char *argv[]) {
     batch_desc.desc_list_addr = (uint64_t)desc_buf;
     batch_desc.completion_addr = (uintptr_t)&batch_comp;
 
+    // warm up
     enqcmd(wq_info.wq_portal, &desc);
     enqcmd(wq_info.wq_portal, &batch_desc);
     while (batch_comp.status == 0 || comp.status == 0);
+
+    // benchmark
+    comp.status = 0;
+    enqcmd(wq_info.wq_portal, &desc);
+    start = rdtsc();
+    poll_single();
 
     // batch first and then single
     comp.status = batch_comp.status = 0;

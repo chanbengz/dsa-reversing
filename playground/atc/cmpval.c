@@ -1,6 +1,4 @@
 #include "dsa.h"
-#include <stdlib.h>
-#include <string.h>
 
 #define BLEN (4096ull << 10)
 #define TESTS 100000
@@ -26,7 +24,7 @@ retry:
 
     start = rdtsc();
     while (comp->status == 0 && retry++ < MAX_COMP_RETRY) {
-        umonitor(&(comp));
+        umonitor(comp);
         if (comp->status == 0) {
             uint64_t delay = __rdtsc() + UMWAIT_DELAY;
             umwait(UMWAIT_STATE_C0_1, delay);

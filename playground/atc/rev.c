@@ -10,6 +10,7 @@ int probe_count = 0;
 
 #define WARMUP_TESTS 2
 #define TESTS_PER_PROBE 10000
+#define NUM_TRACES 1000
 #define MAX_OFFSET 33
 #define EVCTION_SETS 2
 
@@ -74,6 +75,20 @@ int main(int argc, char *argv[]) {
         }
         printf("evict trial: %ld\n", result / TESTS_PER_PROBE);
         break;
+    // collect latencies of hit and miss
+    case 3:
+        FILE *hit_file = fopen("devtlb-hit.txt", "w");
+        FILE *miss_file = fopen("devtlb-miss.txt", "w");
+        for (int i = 0; i < NUM_TRACES; i++) {
+            probe(base); // warm up
+            uint64_t hit = probe(base);
+            uint64_t miss = probe(base + offset);
+            fprintf(hit_file, "%ld\n", hit);
+            fprintf(miss_file, "%ld\n", miss);
+        }
+        fclose(hit_file);
+        fclose(miss_file);
+        break;
     default:
         printf("Invalid argument\n");
         break;
@@ -86,14 +101,14 @@ uint64_t probe(void *addr) {
     probe_count++;
     uint64_t start, end, retry = 0, ret = 0;
     struct dsa_completion_record *comp = (struct dsa_completion_record *)addr;
-    desc.completion_addr = (uintptr_t)comp;
+    desc.completion_addr = (uintptr_t) comp;
     memset(comp, 0, 8);
 
 resubmit:
     enqcmd(wq_info.wq_portal, &desc);
     start = rdtsc();
     while (comp->status == 0 && retry++ < MAX_COMP_RETRY) {
-        umonitor(&(comp));
+        umonitor(comp);
         if (comp->status == 0) {
             uint64_t delay = __rdtsc() + UMWAIT_DELAY;
             umwait(UMWAIT_STATE_C0_1, delay);
