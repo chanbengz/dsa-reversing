@@ -7,9 +7,8 @@ uint64_t BLEN = (4096ull << 0);
 uint64_t start;
 uint64_t submit = 0;
 struct wq_info wq_info;
-uint64_t submit_buf[TEST_NUM] = {0};
+uint64_t submit_buf[TEST_NUM + 1] = {0}, occupy_buf[TEST_NUM + 1] = {0};
 char *src, *dst;
-int occupy = 0;
 
 int submit_async() {
     struct dsa_hw_desc desc = {};
@@ -25,7 +24,7 @@ int submit_async() {
         desc.xfer_size = (4096 << i);
         start = rdtsc();
         _mm_sfence();
-        if (enqcmd(wq_info.wq_portal, &desc)) occupy++;
+        if (enqcmd(wq_info.wq_portal, &desc)) occupy_buf[i] = 1;
         submit_buf[i] = rdtsc() - start;
     }
 
@@ -53,11 +52,11 @@ int main(int argc, char *argv[]) {
     while (comp.status == 0);
     
     submit_async();
-
-    // printf("occupy: %d\n", occupy);
     
-    for (int i = 0; i < TEST_NUM; i++)
+    for (int i = 0; i < TEST_NUM; i++) {
         fprintf(async_file, "%ld\n", submit_buf[i]);
+        printf("submit %2d: %ld cycles, occupy: %ld\n", i, submit_buf[i], occupy_buf[i]);
+    }
 
     fclose(async_file);
 
