@@ -8,6 +8,7 @@ y_async = np.fromfile("data/async.txt", dtype=int, sep="\n")
 
 assert len(x) == len(y_sub) == len(y_wait)
 
+plt.rcParams['font.family'] = 'Optima'
 plt.figure(figsize=(10, 6))
 plt.plot(x, y_sub, color='#4285F4', marker='o', linestyle='-', markersize=4, label='Submission')
 plt.plot(x, y_wait, color='#EA4335', marker='s', linestyle='-', markersize=4, label='Completion')

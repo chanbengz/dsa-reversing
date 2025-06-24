@@ -1,11 +1,11 @@
 #include "dsa.h"
-#include <linux/idxd.h>
 
 #define BLEN (4096 << 0)
 #define COMP_ARRAY_SIZE (4096 << 10)
 #define CALIBRATION_RUNS 10000
 #define DIFF_THRESHOLD 300
 #define CALIBRATION_RETRIES 10
+#define BITS_TO_RECEIVE 8
 
 #define UPDATE_THRESHOLD(hit, miss) ((hit + miss * 9) / 10)
 
@@ -121,8 +121,8 @@ calib:
             break;
         }
     }
-    
-    for (int i = 0; i < 8; i++) {
+
+    for (int i = 0; i < BITS_TO_RECEIVE; i++) {
         char bits = 0;
         for (int i = 0; i < BITS_REPEAT; i++) {
             bits += receive();

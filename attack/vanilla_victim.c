@@ -1,5 +1,4 @@
 #include "dsa.h"
-#include <time.h>
 
 #define BLEN (4096 << 0)  // 4KB
 #define SUBMISSION_INTERVAL_MS 500

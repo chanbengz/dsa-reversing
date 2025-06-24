@@ -3,6 +3,27 @@
 This repos holds the artifact of paper
 "Data Stealth Assassin: Exploiting Intel Data Streaming Accelerator in Side-Channel Attacks".
 
+## Structure
+
+```
+dsa-reversing
+├── attack     # Attack experiments
+├── evaluate   # Evaluation scripts
+├── ISSUE.md   # Issues and FAQ
+├── LICENSE
+├── playground # Reverse-engineering
+│   ├── atc # DevTLB
+│   ├── deprecated
+│   ├── README.md
+│   └── wq # Shared work queue
+├── README.md
+└── setup
+    ├── config
+    ├── dpdk-devbind.py
+    ├── dto
+    └── setup_dsa.sh
+```
+
 ## Getting Started
 
 > [!NOTE]

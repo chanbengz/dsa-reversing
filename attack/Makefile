@@ -9,6 +9,10 @@ covert:
 	$(CC) cc_sender.c -o build/cc_sender $(CFLAGS) $(LDFLAGS)
 	$(CC) cc_receiver.c -o build/cc_receiver $(CFLAGS) $(LDFLAGS)
 
+atc_spy:
+	mkdir -p build
+	$(CC) atc_spy.c -o build/atc_spy $(CFLAGS) $(LDFLAGS)
+
 run: build
 	./build/$(TARGET)
 

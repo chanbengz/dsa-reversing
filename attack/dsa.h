@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <time.h>
 #include <sys/cdefs.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -109,6 +110,37 @@ static int map_wq(struct wq_info *wq_info)
     wq_info->wq_portal = wq_portal;
     wq_info->wq_mapped = true;
     wq_info->wq_fd = -1;
+    return 0;
+}
+
+
+static int map_spec_wq(struct wq_info *wq_info, char* path) {
+    void *wq_portal;
+    struct accfg_ctx *ctx;
+    struct accfg_wq *wq;
+    struct accfg_device *device;
+    int fd;
+    wq_portal = MAP_FAILED;
+
+    fd = open(path, O_RDWR);
+    if (fd >= 0) {
+        wq_portal =
+            mmap(NULL, 0x1000, PROT_WRITE, MAP_SHARED | MAP_POPULATE, fd, 0);
+    }
+
+    if (wq_portal == MAP_FAILED) {
+        if (errno == EPERM && is_write_syscall_success(fd)) {
+            wq_info->wq_mapped = false;
+            wq_info->wq_fd = fd;
+            return 0;
+        }
+        return -errno;
+    }
+
+    wq_info->wq_portal = wq_portal;
+    wq_info->wq_mapped = true;
+    wq_info->wq_fd = -1;
+
     return 0;
 }
 
