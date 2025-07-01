@@ -182,3 +182,7 @@ static inline void nsleep(uint64_t ns) {
         asm volatile("" : : : "memory");
     }
 }
+
+static uint8_t op_status(uint8_t status) {
+    return status & DSA_COMP_STATUS_MASK;
+}

@@ -1,10 +1,11 @@
 #include "dsa.h"
 
 #define CALIBRATION_RUNS 10000
-#define ATTACK_INTERVAL_US 10  // 50us between probes
+#define ATTACK_INTERVAL_US 1000
 #define DIFF_THRESHOLD 300
 #define CALIBRATION_RETRIES 5
-#define TRACE_BUFFER_SIZE 10000
+#define TRACE_BUFFER_SIZE 20000
+const int TIMESTAMP_ENABLED = 1;
 
 #define UPDATE_THRESHOLD(hit, miss) ((hit + miss * 4) / 5)
 
@@ -31,7 +32,7 @@ static inline uint64_t probe_atc(struct dsa_completion_record* comp) {
 // Save traces to file
 void save_traces(char* taskname) {
     char filename[256];
-    snprintf(filename, sizeof(filename), "atc_%s_traces.txt", taskname);
+    snprintf(filename, sizeof(filename), "atc-%s-traces.txt", taskname);
 
     FILE* fp = fopen(filename, "w");
     if (!fp) {
@@ -109,7 +110,10 @@ calib:
         probe_atc(&comp);
         usleep(ATTACK_INTERVAL_US);
         trace_buffer[trace_index++] = probe_atc(&comp);
-        // usleep(1);
+        if (TIMESTAMP_ENABLED && trace_buffer[trace_index - 1] > detection_threshold) {
+            
+        }
+        usleep(1);
     }
     
     save_traces(taskname);
