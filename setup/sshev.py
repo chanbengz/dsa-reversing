@@ -1,11 +1,12 @@
 import paramiko
 import time
+import random
 
 # Configuration
-hostname = '172.17.0.1'
-username = 'user'
-password = 'password'
-command = 'ssh root'
+hostname = '172.17.0.3'
+username = 'root'
+password = '123456'
+KEYSTROKES = 512
 
 # Connect to SSH server
 client = paramiko.SSHClient()
@@ -13,28 +14,19 @@ client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 client.connect(hostname, port=22, username=username, password=password)
 
 # Open a session with a pseudo-terminal
-channel = client.exec_command("bash", get_pty=True)[0]
-
-# Give shell time to initialize
-time.sleep(10)
+# channel = client.exec_command("/bin/bash -i", get_pty=True)[0]
+channel = client.invoke_shell()
+time.sleep(5)
 
 # Send characters one at a time with high-accuracy timestamps
 timestamps = []
-
-for char in command:
+for _ in range(KEYSTROKES):
     timestamp = time.clock_gettime(time.CLOCK_MONOTONIC)
-    channel.write(char)
-    # channel.send(char)
-    timestamps.append((char, timestamp))
-    time.sleep(2)  # simulate human typing
-
-# Wait for spy to exit
-time.sleep(10)
+    channel.send(b'a')
+    timestamps.append(timestamp)
+    time.sleep(random.randrange(300, 700) / 1000)  # simulate human typing
 
 # Print recorded timestamps
-for char, ts in timestamps:
-    print(f"{repr(char)} at {ts:.9f}")
-
-# Cleanup
-channel.close()
-client.close()
+with open('ground-ts.txt', 'w') as f:
+    for ts in timestamps:
+        f.write(f"{ts:.9f}\n")
