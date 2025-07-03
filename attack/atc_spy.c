@@ -2,14 +2,14 @@
 #include <signal.h>
 
 #define CALIBRATION_RUNS 10000
-#define ATTACK_INTERVAL_US 1000
+#define ATTACK_INTERVAL_US 3000
 #define DIFF_THRESHOLD 300
 #define NOISE_THRESHOLD 2000 // cycles
 #define CALIBRATION_RETRIES 5
 #define TRACE_BUFFER_SIZE 20000
 const int TIMESTAMP_ENABLED = 1;
 
-#define UPDATE_THRESHOLD(hit, miss) ((hit + miss * 4) / 5)
+#define UPDATE_THRESHOLD(hit, miss) ((hit * 34 + miss * 66) / 100)
 
 int keep_running = 1;
 uint64_t detection_threshold;
@@ -129,14 +129,12 @@ calib:
         else trace_buffer[trace_index++] = probe_atc(&comp);
 
         // saving timestamps
-        if (TIMESTAMP_ENABLED 
-            && trace_buffer[trace_index - 1] > detection_threshold 
-            && trace_buffer[trace_index - 1] < NOISE_THRESHOLD) {
-                clock_gettime(CLOCK_MONOTONIC, &ts);
-                trace_timestamps[ts_index++] = (double) ts.tv_sec + (double) ts.tv_nsec / 1e9;
-                printf("detected: %d\n", ts_index - 1);
+        if (TIMESTAMP_ENABLED && tmp > detection_threshold && tmp < NOISE_THRESHOLD) {
+            clock_gettime(CLOCK_MONOTONIC, &ts);
+            trace_timestamps[ts_index++] = (double) ts.tv_sec + (double) ts.tv_nsec / 1e9;
+            printf("detected: %d\n", ts_index - 1);
         } else {
-            usleep(1);
+            usleep(10);
         } 
     }
     

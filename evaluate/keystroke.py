@@ -1,6 +1,6 @@
 import numpy as np
 
-dev = "swq"
+dev = "atc" # atc/swq
 ground_truth =  np.fromfile(f"data/{dev}-ground-ts.txt", dtype=float, sep="\n")
 collected = np.fromfile(f"data/{dev}-ssh-ts.txt", dtype=float, sep="\n")
 
@@ -11,7 +11,7 @@ true_positives = 0
 diff = np.array([], dtype=float)
 for i in range(len(ground_truth)):
     # around 200ms tolerance
-    filtered = collected[(collected >= ground_truth[i] - 0.2) & (collected <= ground_truth[i] + 0.2)]
+    filtered = collected[(collected >= ground_truth[i] - 0.1) & (collected <= ground_truth[i] + 0.1)]
     if len(filtered) > 0:
         diff = np.append(diff, filtered[0] - ground_truth[i])
         if len(filtered) > 1:
