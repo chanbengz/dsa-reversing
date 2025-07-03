@@ -1,5 +1,4 @@
 #include "dsa.h"
-#include <threads.h>
 
 struct wq_info wq_info;
 struct dsa_hw_desc desc = {};

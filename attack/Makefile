@@ -9,6 +9,7 @@ covert:
 	mkdir -p build
 	$(CC) cc_sender.c -o build/cc_sender $(CFLAGS) $(LDFLAGS)
 	$(CC) cc_receiver.c -o build/cc_receiver $(CFLAGS) $(LDFLAGS)
+	# $(CC) cc_workq.c -o build/cc_workq $(CFLAGS) $(LDFLAGS)
 
 spy:
 	mkdir -p build
