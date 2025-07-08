@@ -1,4 +1,8 @@
-# DSA Reversing
+<div align=center>
+
+# Data Stealth Assassin: Exploiting Intel Data Streaming Accelerator in Side-Channel Attacks
+
+</div>
 
 This repos holds the artifact of paper
 "Data Stealth Assassin: Exploiting Intel Data Streaming Accelerator in Side-Channel Attacks".
