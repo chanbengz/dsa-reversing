@@ -1,88 +1,78 @@
 #include "dsa.h"
 
+#define XFER_SIZE (4096 << 6)
+
 struct wq_info wq_info;
 struct dsa_hw_desc desc = {};
 struct dsa_completion_record* comp_array;
 
 static inline void send_bit(struct dsa_completion_record* comp) {
     memset(comp, 0, sizeof(struct dsa_completion_record));
-    // desc.src_addr = (uintptr_t) comp + 32;
     desc.completion_addr = (uintptr_t) comp;
-
-    if (wq_info.wq_mapped) {
-        submit_desc(wq_info.wq_portal, &desc);
-    } else {
-        int rc = write(wq_info.wq_fd, &desc, sizeof(desc));
-        if (rc != sizeof(desc))
-            return;
-    }
+    enqcmd(wq_info.wq_portal, &desc);
 }
 
 void send_char(char c) {
     for (int i = 0; i < 8; i++) {
         int bit = (c >> i) & 1;
         for(int i = 0; i < BITS_REPEAT; i++) {
+            uint64_t start = rdtsc();
             if (bit) {
-                uint64_t start = rdtsc();
                 send_bit(comp_array);
-                while (rdtsc() - start < BIT_INTERVAL_NS)
-                    _mm_pause();
-            } else {
-                nsleep(BIT_INTERVAL_NS);
             }
+            while (rdtsc() - start < BIT_INTERVAL_NS);
         }
     }
 }
 
-int map_another_wq(struct wq_info* wq_info) {
-    wq_info->wq_mapped = false;
-    wq_info->wq_fd = open("/dev/dsa/wq0.1", O_RDWR);
-    if (wq_info->wq_fd < 0) {
-        return -errno;
-    }
-    return 0;
-}
-
 int main(int argc, char *argv[]) {
-    size_t comp_array_size = 4096 * 64;
-    comp_array = (struct dsa_completion_record*)aligned_alloc(32, comp_array_size);
+    comp_array = (struct dsa_completion_record*) \
+        aligned_alloc(32, XFER_SIZE);
     if (!comp_array) {
         fprintf(stderr, "[cc_sender] Failed to allocate memory\n");
         return EXIT_FAILURE;
     }
-    memset(comp_array, 0, comp_array_size);
-    
-    int rc = map_another_wq(&wq_info);
+    memset(comp_array, 0, XFER_SIZE);
+
+    int rc = map_spec_wq(&wq_info, "/dev/dsa/wq2.0");
     if (rc) {
         fprintf(stderr, "[cc_sender] Failed to map work queue: %d\n", rc);
         free(comp_array);
         return EXIT_FAILURE;
     }
     
-    // desc.opcode = DSA_OPCODE_COMPARE;
     desc.opcode = DSA_OPCODE_NOOP;
     desc.flags = IDXD_OP_FLAG_RCR | IDXD_OP_FLAG_CRAV;
-    // desc.pattern = 0x0;
-    // desc.xfer_size = 8;
-    // desc.expected_res = 0;
     
     printf("[cc_sender] Ready to transmit data...\n");
     
-    const char* message = "HELLO";
-    size_t message_len = strlen(message);
-    size_t message_pos = 4;
-    
-    int repeat = 1;
-    for (int i = 0; i < 8; i++) {
-        printf("[cc_sender] Sending %d\n", (message[message_pos] >> i) & 1);
+    char message[CHARS_TO_RECEIVE];
+    FILE *fp = fopen("msg", "rb");
+    if (!fp) {
+        perror("[cc_sender] Failed to open message file");
+        return EXIT_FAILURE;
     }
-    while (repeat--) {
+
+    size_t message_len = fread(message, 1, CHARS_TO_RECEIVE, fp);
+    fclose(fp);
+    if (message_len == 0) {
+        perror("[cc_sender] Failed to read message file");
+        return EXIT_FAILURE;
+    }
+
+    size_t message_pos = 0;
+    // printf("[cc_sender] Sending %lx\n", *(uint64_t*) message);
+
+    while (message_len--) {
+        // scanf("%*c"); // Wait for user input to send next char
         for (int i = 0; i < START_BITS; i++) {
             send_bit(comp_array);
         }
 
         _mm_mfence();
-        send_char(message[message_pos]);
+        nsleep(10000); // receiver needs to record time
+        send_char(message[message_pos++]);
+        usleep(10); // Give some time for the receiver to process
     }
     
     return EXIT_SUCCESS;
