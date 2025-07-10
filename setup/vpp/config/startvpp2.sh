@@ -29,4 +29,4 @@ done
 
 vppctl -s /run/vpp/cli-vpp2.sock create host-interface name vpp2out
 vppctl -s /run/vpp/cli-vpp2.sock set int state host-vpp2out up
-vppctl -s /run/vpp/cli-vpp2.sock set int ip address host-vpp2out "${VPP2HOSTINTIP}"/"${VPP2HOSTINTMASK}"
+vppctl -s /run/vpp/cli-vpp2.sock set int ip address host-vpp2outcreate host-interface name vpp2out "${VPP2HOSTINTIP}"/"${VPP2HOSTINTMASK}"
