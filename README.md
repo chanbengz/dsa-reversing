@@ -1,16 +1,41 @@
-# DSA Reversing
+<div align=center>
+
+# Data Stealth Assassin: Exploiting Intel Data Streaming Accelerator in Side-Channel Attacks
+
+</div>
 
 This repos holds the artifact of paper
 "Data Stealth Assassin: Exploiting Intel Data Streaming Accelerator in Side-Channel Attacks".
+
+## Structure
+
+```
+dsa-reversing
+├── attack     # Attack experiments
+├── evaluate   # Evaluation scripts
+├── ISSUE.md   # Issues and FAQ
+├── LICENSE
+├── playground # Reverse-engineering
+│   ├── atc # DevTLB
+│   ├── deprecated
+│   ├── README.md
+│   └── wq # Shared work queue
+├── README.md
+└── setup
+    ├── config
+    ├── dpdk-devbind.py
+    ├── dto
+    └── setup_dsa.sh
+```
 
 ## Getting Started
 
 > [!NOTE]
 > This experiment requires Ubuntu 24.04 LTS and Intel 4th Gen Xeon Scalable (or newer) who
-> has DSA integration.
+> has DSA integration. Root privilege is required to setup and run the experiment.
 
-Make sure the driver of DSA and IOMMU is properly installed and enabled during bootup.
-The following command do output something.
+Make sure the driver of DSA and VT-d is properly installed and configured during bootup.
+The following command do output something to verify that they're working.
 
 ```bash
 # check if DSA is enabled
@@ -28,7 +53,6 @@ sudo apt install libaccel-config-dev libaccel-config1
 ```
 
 Enable DSA with configuration (`sudo` required), and grant read/write priviledge to user.
-Most of data-centers enable DSA by default.
 
 ```bash
 sudo ./setup/setup_dsa.sh setup/config/some_config.conf
@@ -39,12 +63,11 @@ sudo chmod 766 /dev/dsa/*
 
 ## Playing with DSA
 
-`playground` holds the experiment sources. For example, in `playground/wq` we explored the
-work queue in DSA, run them by
+`playground` holds the experiment sources. For example, in `playground/wq` you can find
+the source code of the workload queue (WQ) experiment.
 
 ```bash
-cd playground/wq && mkdir -p build
-# or playground/stc
+cd playground/wq && mkdir -p build # or playground/atc
 make buildall
 ```
 
@@ -67,6 +90,6 @@ Open an issue if it doesn't help.
 
 ## Disclaimer
 
-We provide this code as-is, with academic purpose only.
+We provide this code as-is, for academic purpose only.
 You are responsible for protecting yourself, your property and privacy.
 Any risks or damage caused by this code will not be covered.

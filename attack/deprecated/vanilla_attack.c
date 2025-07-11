@@ -11,7 +11,7 @@
 
 struct wq_info wq_info;
 struct dsa_hw_desc desc = {};
-
+uint64_t probe(void* addr);
 
 int main(int argc, char *argv[]) {
     printf("[attack] Starting vanilla attack...\n");

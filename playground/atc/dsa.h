@@ -122,3 +122,9 @@ static __always_inline unsigned char umwait(unsigned int state,
 }
 
 int submit_wd(void *, void *);
+
+static inline void movdir64b(void *dst, const void *src)
+{
+	asm volatile(".byte 0x66, 0x0f, 0x38, 0xf8, 0x02\t\n"
+		: : "a" (dst), "d" (src));
+}

@@ -14,6 +14,7 @@ debug: $(TARGET).c build
 	sudo gdb ./build/$(TARGET)
 
 build: $(TARGET).c
+	mkdir -p build
 	$(CC) $(TARGET).c -o build/$(TARGET) $(CFLAGS) $(LDFLAGS) -g
 	# sudo setcap cap_sys_rawio+ep ./build/$(TARGET)
 	# disable this for now because it's not needed for the attack

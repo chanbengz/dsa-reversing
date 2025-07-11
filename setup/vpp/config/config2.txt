@@ -1,0 +1,4 @@
+create interface memif id 0 slave use-dma
+set in state memif0/0 up
+set int ip address memif0/0 10.10.2.2/24
+ip route add 0.0.0.0/0 via 10.10.2.1

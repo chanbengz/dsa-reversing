@@ -1,24 +1,26 @@
 #include "dsa.h"
-#include <linux/idxd.h>
 
 #define BLEN (4096 << 0)
 #define COMP_ARRAY_SIZE (4096 << 10)
 #define CALIBRATION_RUNS 10000
 #define DIFF_THRESHOLD 300
 #define CALIBRATION_RETRIES 10
+#define BITS_TO_RECEIVE 8
 
-#define UPDATE_THRESHOLD(hit, miss) ((hit + miss * 9) / 10)
+#define UPDATE_THRESHOLD(hit, miss) ((hit * 3 + miss * 7) / 10)
 
 struct wq_info wq_info;
 struct dsa_hw_desc desc = {};
 struct dsa_completion_record* comp_array;
 uint64_t detection_threshold;
+struct timespec ts;
+double time_elapsed = 0.0;
+char message[CHARS_TO_RECEIVE] = {0};
+int idx = 0;
 
 uint64_t probe(struct dsa_completion_record* comp_record) {
-    uint64_t start, retry = 0;
+    uint64_t start;
     memset(comp_record, 0, sizeof(struct dsa_completion_record) * 2);
-    
-    // desc.src_addr = (uintptr_t) comp_record + 32;
     desc.completion_addr = (uintptr_t) comp_record;
     
     if (wq_info.wq_mapped) {
@@ -32,22 +34,14 @@ uint64_t probe(struct dsa_completion_record* comp_record) {
     }
 
     start = rdtsc();
-    while (comp_record->status == 0 && retry++ < MAX_COMP_RETRY) {
-        umonitor(comp_record);
-        if (comp_record->status == 0) {
-            uint64_t delay = rdtsc() + UMWAIT_DELAY;
-            umwait(UMWAIT_STATE_C0_1, delay);
-        }
-    }
-    
+    while (comp_record->status == 0);
     return rdtsc() - start;
 }
 
-int receive() {
+static inline int receive() {
     uint64_t start = rdtsc();
     probe(comp_array);
-    while (rdtsc() - start < BIT_INTERVAL_NS)
-        _mm_pause();
+    while (rdtsc() - start < BIT_INTERVAL_NS - 1000);
     uint64_t latency = probe(comp_array);
     return latency > detection_threshold;
 }
@@ -60,18 +54,14 @@ int main(int argc, char *argv[]) {
     }
     memset(comp_array, 0, COMP_ARRAY_SIZE);
     
-    int rc = map_wq(&wq_info);
+    int rc = map_spec_wq(&wq_info, "/dev/dsa/wq2.0");
     if (rc) {
         fprintf(stderr, "[cc_receiver] Failed to map work queue: %d\n", rc);
         return EXIT_FAILURE;
     }
 
-    // desc.opcode = DSA_OPCODE_COMPARE;
     desc.opcode = DSA_OPCODE_NOOP;
     desc.flags = IDXD_OP_FLAG_CRAV | IDXD_OP_FLAG_RCR;
-    // desc.pattern = 0x0;
-    // desc.xfer_size = 8;
-    // desc.expected_res = 0;
     
     int calib_retry = 0;
     printf("[cc_receiver] Calibrating device-TLB hit and miss latencies...\n");
@@ -109,28 +99,43 @@ calib:
     
     // Main reception loop
     printf("[cc_receiver] Starting reception (press Ctrl+C to stop)...\n");
-    
-    unsigned char received_char = 0, received_bit;
-    int consecutive_bits = 0;
+    unsigned char received_char, bits, consecutive_bits;
 
-    // sync with sender
-    while (1) {
-        consecutive_bits = (receive()) ? consecutive_bits + 1 : 0;
-
-        if (consecutive_bits >= START_BITS) {
-            break;
-        }
-    }
-    
-    for (int i = 0; i < 8; i++) {
-        char bits = 0;
-        for (int i = 0; i < BITS_REPEAT; i++) {
-            bits += receive();
+    for (int j = 0; j < CHARS_TO_RECEIVE; j++) {
+        consecutive_bits = 0, received_char = 0;
+        while (1) {
+            consecutive_bits = (receive()) ? consecutive_bits + 1 : 0;
+            if (consecutive_bits >= START_BITS - 2) break;
         }
 
-        received_bit = bits > (BITS_REPEAT / 3);
-        printf("[cc_receiver] Received: %d (score = %d)\n", received_bit, bits);
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        double start_time = (double) ts.tv_sec + (double) ts.tv_nsec / 1e9;
+
+        for (int i = 0; i < BITS_TO_RECEIVE; i++) {
+            bits = 0;
+            for (int i = 0; i < BITS_REPEAT; i++) {
+                bits += receive();
+            }
+            received_char |= (bits > (BITS_REPEAT / 3)) ? (1 << i) : 0;
+        }
+
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        time_elapsed += ((double) ts.tv_sec + (double) ts.tv_nsec / 1e9) - start_time;
+        
+        message[idx++] = received_char;
     }
-    
+
+    printf("[cc_receiver] Time elapsed: %f\n", time_elapsed);
+    // printf("[cc_receiver] Received message: %lx\n", *(uint64_t*) message);
+
+    FILE *fp = fopen("recv", "wb");
+    if (!fp) {
+        perror("[cc_receiver] Failed to open receive file");
+        return EXIT_FAILURE;
+    }
+
+    fwrite(message, 1, sizeof(message), fp);
+    fclose(fp);
+
     return EXIT_SUCCESS;
 } 
