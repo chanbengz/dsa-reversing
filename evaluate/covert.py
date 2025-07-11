@@ -1,19 +1,19 @@
 import matplotlib.pyplot as plt
-import numpy as np
 import math
 
-app = "swq" # atc/swq
-NUM_TRACES = 32
+app = "atc" # atc/swq
+NUM_TRACES = 40
 num_bits = 16 * NUM_TRACES * 8
 true_cap = lambda c, e: c * (1 + (1 - e) * math.log2(1 - e) + e * math.log2(e))
 
 # DevTLB
-times = [0.21729, 0.56033, 0.4827, 0.40223, 0.57842, 0.45033, 0.6418, 0.818, 0.30257, 0.34938, 0.1776125, 0.162]
-errors = [0.0463, 0.0378,  0.0718, 0.0805,  0.0408,  0.0350,  0.1342, 0.0710, 0.1913,  0.0678,  0.3570,  0.4157]
-
+if app == "atc":
+    times = [0.21729, 0.56033, 0.4827, 0.40223, 0.57842, 0.45033, 0.6418, 0.818,  0.30257, 0.34938, 0.1776125, 0.162]
+    errors = [0.0463, 0.0378,  0.0718, 0.0805,  0.0408,  0.0350,  0.1342, 0.0710, 0.1913,  0.0678,  0.3570,    0.4157]
+else:
 # SWQ
-# times = []
-# errors = []
+    times = [2.84169, 1.36887, 4.10657, 2.0510, 0.68257, 0.34135, 1.02613, 5.1454, 0.17077, 0.08528]
+    errors = [0.1859, 0.1337,  0.1650,  0.2149, 0.1136,  0.3183,  0.3712,  0.3636, 0.4060, 0.3802]
 
 sorted_pairs = sorted(zip(times, errors)) # sort by time => by raw capacity
 times, errors = zip(*sorted_pairs)

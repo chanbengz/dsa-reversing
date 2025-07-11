@@ -1,6 +1,6 @@
 #include "dsa.h"
 
-#define XFER_SIZE (1L << 21)
+#define XFER_SIZE (1L << 26)
 #define WQ_SIZE 7
 const int TIMESTAMP_ENABLED = 1;
 
@@ -61,42 +61,25 @@ int main(int argc, char *argv[]) {
         noops[i].flags = IDXD_OP_FLAG_CRAV | IDXD_OP_FLAG_RCR;
         noops[i].completion_addr = (uintptr_t) &noops_comp[i];
     }
+    
+    for (int i = 15; i < 28; i++) {
+        mass[0].xfer_size = (1L << i);
+        int low = 0, high = INT32_MAX;
 
-    struct timespec ts;
-    char msg[CHARS_TO_RECEIVE];
-    printf("[cc_receiver] Ready to receive bits...\n");
-    for (int j = 0; j < CHARS_TO_RECEIVE; j++) {
-        uint8_t received_char = 0, bits, consecutive_bits = 0;
-
-        while (1) {
-            consecutive_bits = (receive()) ? consecutive_bits + 1 : 0;
-            if (consecutive_bits >= START_BITS) break;
+        while (low < high) {
+            int mid = (low + high) / 2;
+            congest();
+            if (probe_swq()) printf("victim cannot submit\n");
+            nsleep(mid);
+            // printf("swq: %s\n", probe_swq() ? "busy" : "idle");
+            int rc = probe_swq();
+            if (rc) low = mid + 1;
+            else high = mid - 1;
+            usleep(1);
         }
 
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-        double start_time = (double) ts.tv_sec + (double) ts.tv_nsec / 1e9;
-
-        for (int i = 0; i < BITS_TO_RECEIVE; i++) {
-            bits = 0;
-            for (int i = 0; i < BITS_REPEAT; i++) {
-                bits += receive();
-            }
-            received_char |= (bits > (BITS_REPEAT / 3)) ? (1 << i) : 0;
-        }
-
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-        time_elapsed += ((double) ts.tv_sec + (double) ts.tv_nsec / 1e9) - start_time;
-        msg[j] = received_char;
+        printf("Xfer size 2^%d Interval: %d\n", i, low);
     }
-
-    printf("[cc_receiver] Time elapsed: %.6f seconds\n", time_elapsed);
-    FILE *fp = fopen("recv", "wb");
-    if (!fp) {
-        fprintf(stderr, "[cc_receiver] Failed to open output file\n");
-        return EXIT_FAILURE;
-    }
-    fwrite(msg, 1, CHARS_TO_RECEIVE, fp);
-    fclose(fp);
 
     return EXIT_SUCCESS;
 }

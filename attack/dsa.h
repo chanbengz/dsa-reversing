@@ -18,10 +18,12 @@
 #define UMWAIT_DELAY 100000
 #define UMWAIT_STATE_C0_2 0
 #define UMWAIT_STATE_C0_1 1
-#define BITS_REPEAT 7
+#define BITS_REPEAT 1
 #define BIT_INTERVAL_NS 43000
-#define START_BITS 4
+#define START_BITS 2
 #define CHARS_TO_RECEIVE 16
+#define BITS_TO_RECEIVE 8
+#define WQ_INTERVAL_NS 130000
 
 struct wq_info {
     bool wq_mapped;

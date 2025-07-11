@@ -7,6 +7,9 @@
 This repos holds the artifact of paper
 "Data Stealth Assassin: Exploiting Intel Data Streaming Accelerator in Side-Channel Attacks".
 
+> [!WARNING]
+> We're organizing the artifacts and docs for reproducing. Stay tuned.
+
 ## Structure
 
 ```
@@ -87,6 +90,7 @@ Open an issue if it doesn't help.
 - Intel(R) Data Streaming Accelerator User Guide
 - Intel(R) Data Streaming Accelerator Architecuture Specification
 - https://github.com/intel/dsa-perf-micros
+- https://github.com/ligato/vpp-base
 
 ## Disclaimer
 

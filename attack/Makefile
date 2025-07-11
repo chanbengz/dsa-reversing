@@ -7,10 +7,10 @@ EXES = $(patsubst %.c, %, $(SRCS))
 
 covert:
 	mkdir -p build
-	# $(CC) cc_sender.c -o build/cc_sender $(CFLAGS) $(LDFLAGS)
-	# $(CC) cc_receiver.c -o build/cc_receiver $(CFLAGS) $(LDFLAGS)
-	$(CC) cc_sworkq.c -o build/cc_workq $(CFLAGS) $(LDFLAGS)
-	$(CC) cc_rworkq.c -o build/cc_workq $(CFLAGS) $(LDFLAGS)
+	$(CC) cc_sender.c -o build/cc_sender $(CFLAGS) $(LDFLAGS)
+	$(CC) cc_receiver.c -o build/cc_receiver $(CFLAGS) $(LDFLAGS)
+	$(CC) cc_sworkq.c -o build/cc_sworkq $(CFLAGS) $(LDFLAGS)
+	$(CC) cc_rworkq.c -o build/cc_rworkq $(CFLAGS) $(LDFLAGS)
 
 spy:
 	mkdir -p build
@@ -25,7 +25,7 @@ debug: $(TARGET).c build
 
 build: $(TARGET).c
 	mkdir -p build
-	$(CC) $(TARGET).c -o build/$(TARGET) $(CFLAGS) $(LDFLAGS) -g
+	$(CC) $(TARGET).c -o build/$(TARGET) $(CFLAGS) $(LDFLAGS)
 	# sudo setcap cap_sys_rawio+ep ./build/$(TARGET)
 
 clean:

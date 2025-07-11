@@ -5,7 +5,6 @@
 #define CALIBRATION_RUNS 10000
 #define DIFF_THRESHOLD 300
 #define CALIBRATION_RETRIES 10
-#define BITS_TO_RECEIVE 8
 
 #define UPDATE_THRESHOLD(hit, miss) ((hit * 3 + miss * 7) / 10)
 
