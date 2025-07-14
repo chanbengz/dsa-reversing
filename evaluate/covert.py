@@ -30,7 +30,7 @@ def eval_error():
 
 def draw_graph():
     plt.rcParams['font.family'] = 'Optima'
-    fig, ax1 = plt.subplots(figsize=(10, 5))
+    fig, ax1 = plt.subplots(figsize=(10, 4))
     ax2 = ax1.twinx()
 
     ax1.tick_params(axis='x', labelsize=13)

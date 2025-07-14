@@ -41,12 +41,12 @@ sudo ip route add "${VPP2ROUTE}"/"${VPP2MASK}" via "${VPP1HOSTINTIP}"
 # sudo iptables -A FORWARD -s 10.10.3.0/24 -j ACCEPT
 # sudo iptables -A FORWARD -d 10.10.3.0/24 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 
 
-sudo vppctl -s /run/vpp/cli-vpp1.sock create host-interface name vpp1out
+sudo vppctl -s /run/vpp/cli-vpp1.sock create interface af_xdp host-if vpp1out num-rx-queues all
 typeset -i cnt=60
 until sudo vppctl -s /run/vpp/cli-vpp1.sock show int | grep vpp1out ; do
        ((cnt=cnt-1)) || exit 1
        sleep 1
-       sudo vppctl -s /run/vpp/cli-vpp1.sock create host-interface name vpp1out
+       sudo vppctl -s /run/vpp/cli-vpp1.sock create interface af_xdp host-if vpp1out num-rx-queues all
 done
 
 sudo vppctl -s /run/vpp/cli-vpp1.sock create interface memif id 0 master use-dma
@@ -54,6 +54,6 @@ sudo vppctl -s /run/vpp/cli-vpp1.sock set int state memif0/0 up
 sudo vppctl -s /run/vpp/cli-vpp1.sock set int ip address memif0/0 ${VPP1MEMIFIP}/${VPP1MEMIFMASK}
 sudo vppctl -s /run/vpp/cli-vpp1.sock ip route add ${VPP2ROUTE}/${VPP2MASK} via ${VPP2MEMIFIP}
 sudo vppctl -s /run/vpp/cli-vpp1.sock ip route add ${HOSTROUTE}/${HOSTMASK} via ${HOST1IP}
-sudo vppctl -s /run/vpp/cli-vpp1.sock create host-interface name vpp1out
-sudo vppctl -s /run/vpp/cli-vpp1.sock set int state host-vpp1out up
-sudo vppctl -s /run/vpp/cli-vpp1.sock set int ip address host-vpp1out "${VPP1HOSTINTIP}"/"${VPP1HOSTINTMASK}"
+sudo vppctl -s /run/vpp/cli-vpp1.sock set int state vpp1out/0 up
+sudo vppctl -s /run/vpp/cli-vpp1.sock set int ip address vpp1out/0 "${VPP1HOSTINTIP}"/"${VPP1HOSTINTMASK}"
+sudo vppctl -s /run/vpp/cli-vpp1.sock set int rx-mode vpp1out/0 queue 0 interrupt

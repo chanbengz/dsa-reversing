@@ -7,7 +7,7 @@ vpp -c startup2.conf
 
 # Setup the host link
 ip link add name vpp2out type veth peer name vpp2host
-ip link set dev vpp2out up
+ip link set dev vpp2out promisc on up
 ip link set dev vpp2host up
 ip addr add "${HOST2IP}"/"${HOST2MASK}" dev vpp2host
 ip route add "${HOSTROUTE}"/"${HOSTMASK}" via "${VPP2HOSTINTIP}"
@@ -27,6 +27,6 @@ until vppctl -s /run/vpp/cli-vpp2.sock show int | grep vpp2out ; do
        vppctl -s /run/vpp/cli-vpp2.sock create host-interface name vpp2out
 done
 
-vppctl -s /run/vpp/cli-vpp2.sock create host-interface name vpp2out
 vppctl -s /run/vpp/cli-vpp2.sock set int state host-vpp2out up
-vppctl -s /run/vpp/cli-vpp2.sock set int ip address host-vpp2outcreate host-interface name vpp2out "${VPP2HOSTINTIP}"/"${VPP2HOSTINTMASK}"
+vppctl -s /run/vpp/cli-vpp2.sock set int ip address host-vpp2out "${VPP2HOSTINTIP}"/"${VPP2HOSTINTMASK}"
+vppctl -s /run/vpp/cli-vpp2.sock set int rx-mode host-vpp2out queue 0 interrupt

