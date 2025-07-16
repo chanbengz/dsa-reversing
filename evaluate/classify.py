@@ -15,13 +15,13 @@ sequence_len = 250
 group_size = 400
 latency_threshold = 700
 websites = [
-    'example.com',
+    'www.weibo.com',
     'www.baidu.com',
     'www.bilibili.com',
     'www.zhihu.com',
     'www.163.com',
     'www.canva.com',
-    'www.jd.com',
+    'www.microsoft.com',
     'www.taobao.com',
     'www.zoom.com',
     'www.apple.com',
@@ -56,11 +56,11 @@ class AttentionLayer(Layer):
 def build_model(input_shape, num_classes):
     inputs = Input(shape=input_shape)
     x = Bidirectional(LSTM(128, return_sequences=True))(inputs)
-    x = Dropout(0.4)(x)
+    x = Dropout(0.35)(x)
     x = Bidirectional(LSTM(128, return_sequences=True))(x)
-    x = Dropout(0.4)(x)
-    x = AttentionLayer()(x)
     x = Dropout(0.3)(x)
+    x = AttentionLayer()(x)
+    x = Dropout(0.26)(x)
     outputs = Dense(num_classes, activation='softmax')(x)
     model = Model(inputs, outputs)
     return model
@@ -141,16 +141,13 @@ num_classes = len(encoder.classes_)
 cm_probs = np.zeros((num_classes, num_classes))
 
 for true_class in range(num_classes):
-    # Get indices where true class equals current class
     mask = (y_test == true_class)
     if np.sum(mask) > 0:
-        # Average the predicted probabilities for this true class
         cm_probs[true_class, :] = np.mean(y_pred_probs[mask], axis=0)
 
 # Convert probabilities to percentages
 cm_probs_percent = cm_probs * 100
 
-# Plot probability matrix as percentages
 disp = ConfusionMatrixDisplay(confusion_matrix=cm_probs_percent, display_labels=encoder.classes_)
 
 plt.rcParams['font.family'] = 'Optima'

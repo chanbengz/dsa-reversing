@@ -26,8 +26,8 @@ dsa-reversing
 ├── README.md
 └── setup
     ├── config
-    ├── dpdk-devbind.py
     ├── dto
+    ├── vpp
     └── setup_dsa.sh
 ```
 

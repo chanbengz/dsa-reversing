@@ -1,13 +1,13 @@
-https://example.com
+https://www.apple.com
+https://www.weibo.com
 https://www.baidu.com
 https://www.bilibili.com
 https://www.zhihu.com/signin
 https://www.163.com
 https://www.canva.com
-https://www.jd.com
+https://www.microsoft.com
 https://www.taobao.com
 https://www.zoom.com
-https://www.apple.com
 https://www.douban.com
 https://www.iqiyi.com
 https://www.aliyun.com

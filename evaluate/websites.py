@@ -3,25 +3,25 @@ import numpy as np
 
 websites = [
     'www.baidu.com',
-    'www.bilibili.com',
-    'example.com',
+    'www.amazon.com',
+    'www.microsoft.com',
 ]
 
 threshold = 700
 traces_per_bucket = 400
-total_traces = 40000
+total_traces = 100000
 num_buckets = total_traces // traces_per_bucket
 
 # Colors for different websites
 colors = ['#1f77b4', '#ff7f0e', '#2ca02c']  # Blue, Orange, Green
-website_labels = ['baidu.com', 'bilibili.com', 'example.com']
+website_labels = ['baidu.com', 'amazon.com', 'microsoft.com']
 
 plt.rcParams['font.family'] = 'Optima'
 plt.figure(figsize=(8, 3))
 
 # Process each website
 for i, website in enumerate(websites):
-    latency_data = np.fromfile(f"data/wf-traces_{website}.txt", dtype=int, sep="\n")
+    latency_data = np.fromfile(f"wfdata/wf-traces_{website}_1.txt", dtype=int, sep="\n")
     mask = (latency_data <= 3000) & (latency_data >= 200)
     latency_data = latency_data[mask]
     

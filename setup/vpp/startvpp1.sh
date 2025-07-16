@@ -37,9 +37,9 @@ sudo ip link set dev vpp1host up
 sudo ip addr add "${HOST1IP}"/"${HOST1MASK}" dev vpp1host
 sudo ip route add "${MEMIFROUTE}"/"${MEMIFMASK}" via "${VPP1HOSTINTIP}"
 sudo ip route add "${VPP2ROUTE}"/"${VPP2MASK}" via "${VPP1HOSTINTIP}"
-# sudo iptables -t nat -A POSTROUTING -s 10.10.3.0/24 -j MASQUERADE
-# sudo iptables -A FORWARD -s 10.10.3.0/24 -j ACCEPT
-# sudo iptables -A FORWARD -d 10.10.3.0/24 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 
+sudo iptables -t nat -A POSTROUTING -s 10.10.3.0/24 -j MASQUERADE
+sudo iptables -A FORWARD -s 10.10.3.0/24 -j ACCEPT
+sudo iptables -A FORWARD -d 10.10.3.0/24 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 
 
 sudo vppctl -s /run/vpp/cli-vpp1.sock create interface af_xdp host-if vpp1out num-rx-queues all
 typeset -i cnt=60
