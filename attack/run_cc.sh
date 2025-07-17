@@ -21,4 +21,5 @@ else
     done
 fi
 
-mv recv* ../evaluate/data
+mkdir -p ../evaluate/ccdata
+mv recv* ../evaluate/ccdata

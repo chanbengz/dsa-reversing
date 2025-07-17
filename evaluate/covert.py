@@ -21,10 +21,10 @@ capc = [num_bits / t / 1000 for t in times]
 true_capc = [true_cap(c, e) for c, e in zip(capc, errors)]
 
 def eval_error():
-    std = open("data/msg", "rb").read()
+    std = open("ccdata/msg", "rb").read()
     bits_err = 0
     for i in range(1, NUM_TRACES + 1):
-        recv = open(f"data/recv_{i}", "rb").read()
+        recv = open(f"ccdata/recv_{i}", "rb").read()
         bits_err += sum(bin(x ^ y).count('1') for x, y in zip(std, recv))
     return bits_err / num_bits
 
@@ -46,15 +46,10 @@ def draw_graph():
     
     ax1.spines['bottom'].set_color('black')
     
-    # Add legends
-    # lines1, labels1 = ax1.get_legend_handles_labels()
-    # lines2, labels2 = ax2.get_legend_handles_labels()
-    # ax1.legend(lines1 + lines2, labels1 + labels2, loc='best')
-    
     plt.grid(False)
     plt.savefig(f'data/cc-{app}.pdf', bbox_inches='tight')
     plt.close()
 
-draw_graph()
-print(f"Highest: {sorted(true_capc)[-1]:.2f}")
-# print(f"Error bits: {eval_error()}")
+# draw_graph()
+# print(f"Highest: {sorted(true_capc)[-1]:.2f}")
+print(f"Error bits: {eval_error()}")

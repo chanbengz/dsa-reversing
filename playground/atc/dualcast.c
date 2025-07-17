@@ -1,5 +1,4 @@
 #include "dsa.h"
-#include <linux/idxd.h>
 
 #define BLEN (4096ull << 4)
 #define DSA_OP_FLAG_US (1 << 16)

@@ -20,7 +20,7 @@ dsa-reversing
 ├── LICENSE
 ├── playground # Reverse-engineering
 │   ├── atc # DevTLB
-│   ├── deprecated
+│   ├── deprecated # Deprecated experiments that not included in the paper
 │   ├── README.md
 │   └── wq # Shared work queue
 ├── README.md

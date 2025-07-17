@@ -23,6 +23,23 @@ However, PRS cannot deal with soft page fault because page tables have not mappi
 only do the swap-in of hard page fault. Thus, ensure that `malloc`ed buffers are accessed in process
 before being accessed by DSA.
 
+## Failed to Build Docker Image
+
+If it's network issue (like if you are in China), the fastest way is to use a proxy. After setting up
+a local proxy (like Clash/Shadowsocks), you can set the `http_proxy` and `https_proxy` environment variables
+and add `--network host` and `--build-arg http_proxy=$http_proxy` to the `docker build` command.
+
+## Calibration Keeps Failing or the Latency Varies Too Much
+
+This would happen if you running on a server with NUMA architecture (multiple CPU sockets).
+You can try to set the CPU affinity of the DSA process to a single CPU core using
+```bash
+taskset -c <core_id> <your_dsa_process>
+```
+
+To get the core ID, you can use `numactl -H` to list the available cores and their NUMA nodes.
+Normally, `dsa0` will locate on the numa node 0, and `dsa2` will locate on the numa node 1.
+
 ## `attack-rs` fail to reproduce
 
 Rust implmentation is unstable now.
