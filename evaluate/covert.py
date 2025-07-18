@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import math
 
-app = "atc" # atc/swq
+app = "swq" # atc/swq
 NUM_TRACES = 40
 num_bits = 16 * NUM_TRACES * 8
 true_cap = lambda c, e: c * (1 + (1 - e) * math.log2(1 - e) + e * math.log2(e))
@@ -30,12 +30,12 @@ def eval_error():
 
 def draw_graph():
     plt.rcParams['font.family'] = 'Optima'
-    fig, ax1 = plt.subplots(figsize=(10, 4))
+    fig, ax1 = plt.subplots(figsize=(5, 4))
     ax2 = ax1.twinx()
 
     ax1.tick_params(axis='x', labelsize=13)
-    ax1.set_xlabel('Raw Capcity (kbps)', fontsize=16, color='black')
-    
+    ax1.set_xlabel('Raw Capacity (kbps)', fontsize=16, color='black')
+
     ax1.plot(capc, true_capc, marker=None, linestyle='-', color='#4285F4', markersize=4, label='True Capacity (kbps)')
     ax1.set_ylabel('True Capacity (kbps)', fontsize=16, color='black')
     ax1.tick_params(axis='y', labelcolor='#4285F4', labelsize=13)
@@ -50,6 +50,6 @@ def draw_graph():
     plt.savefig(f'data/cc-{app}.pdf', bbox_inches='tight')
     plt.close()
 
-# draw_graph()
-# print(f"Highest: {sorted(true_capc)[-1]:.2f}")
-print(f"Error bits: {eval_error()}")
+draw_graph()
+print(f"Highest: {sorted(true_capc)[-1]:.2f}")
+# print(f"Error bits: {eval_error()}")

@@ -5,7 +5,7 @@ from tensorflow.keras.layers import Input, Dense, LSTM, Bidirectional, Layer, Dr
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score
+from sklearn.metrics import ConfusionMatrixDisplay, accuracy_score
 import matplotlib.pyplot as plt
 import os
 

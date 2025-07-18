@@ -9,7 +9,7 @@ mask = (latency_data <= 2000) & (latency_data >= 200)
 latency_data = latency_data[mask]
 
 plt.rcParams['font.family'] = 'Optima'
-plt.figure(figsize=(8, 4))
+plt.figure(figsize=(8, 3))
 slot_numbers = np.arange(len(latency_data))
 
 plt.plot(slot_numbers, latency_data, linewidth=0.8, alpha=0.7, label='Traces')

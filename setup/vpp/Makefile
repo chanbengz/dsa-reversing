@@ -13,9 +13,9 @@ start:
 stop:
 	ps -ef | grep vpp | awk '{print $$2}' | head -n 1 | xargs sudo kill
 	sudo ip link del dev vpp1host
-	# sudo iptables -t nat -D POSTROUTING -s 10.10.3.0/24 -j MASQUERADE
-	# sudo iptables -D FORWARD -s 10.10.3.0/24 -i vpp1host -j ACCEPT          
-    # sudo iptables -D FORWARD -s 10.10.3.0/24 -j ACCEPT
+	sudo iptables -t nat -D POSTROUTING -s 10.10.3.0/24 -j MASQUERADE
+	sudo iptables -D FORWARD -s 10.10.3.0/24 -i vpp1host -j ACCEPT
+	sudo iptables -D FORWARD -s 10.10.3.0/24 -j ACCEPT
 
 clean:
 	docker rmi vpp
