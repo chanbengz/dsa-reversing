@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import math
 
-app = "swq" # atc/swq
+app = "atc" # atc/swq
 NUM_TRACES = 40
 num_bits = 16 * NUM_TRACES * 8
 true_cap = lambda c, e: c * (1 + (1 - e) * math.log2(1 - e) + e * math.log2(e))
@@ -36,11 +36,11 @@ def draw_graph():
     ax1.tick_params(axis='x', labelsize=13)
     ax1.set_xlabel('Raw Capacity (kbps)', fontsize=16, color='black')
 
-    ax1.plot(capc, true_capc, marker=None, linestyle='-', color='#4285F4', markersize=4, label='True Capacity (kbps)')
+    ax1.plot(capc, true_capc, marker=None, linestyle='-', color='#4285F4', linewidth=2, label='True Capacity (kbps)')
     ax1.set_ylabel('True Capacity (kbps)', fontsize=16, color='black')
-    ax1.tick_params(axis='y', labelcolor='#4285F4', labelsize=13)
+    ax1.tick_params(axis='y', labelcolor="#1765E2", labelsize=13)
     
-    ax2.plot(capc, errors, marker=None, linestyle='--', color='#EA4335', markersize=4, label='Error Rate')
+    ax2.plot(capc, errors, marker=None, linestyle='--', color='#EA4335', linewidth=2, label='Error Rate')
     ax2.set_ylabel('Error Rate', fontsize=16, color='black')
     ax2.tick_params(axis='y', labelcolor='#EA4335', labelsize=13)
     

@@ -4,7 +4,7 @@
 #define ATTACK_INTERVAL_US 10
 #define DIFF_THRESHOLD 300
 #define CALIBRATION_RETRIES 5
-#define TRACE_BUFFER_SIZE 100000
+#define TRACE_BUFFER_SIZE 100000 // 400000
 
 #define UPDATE_THRESHOLD(hit, miss) ((hit * 34 + miss * 66) / 100)
 
@@ -28,8 +28,9 @@ static inline uint64_t probe_atc(struct dsa_completion_record* comp) {
 }
 
 // Save traces to file
-void save_traces() {
-    char filename[256] = "wf-traces.txt";
+void save_traces(char* name) {
+    char filename[256];
+    snprintf(filename, sizeof(filename), "%s-traces.txt", name);
     FILE* fp = fopen(filename, "w");
     if (!fp) {
         fprintf(stderr, "[monitor] Failed to open file\n");
@@ -45,7 +46,7 @@ void save_traces() {
 
 int main(int argc, char *argv[]) {
     // Initialize work queue
-    int rc = map_spec_wq(&wq_info, "/dev/dsa/wq0.1");
+    int rc = map_spec_wq(&wq_info, "/dev/dsa/wq2.1"); // wq0.1 for websites
     if (rc) {
         fprintf(stderr, "[monitor] Failed to map work queue: %d\n", rc);
         return EXIT_FAILURE;
@@ -100,8 +101,8 @@ calib:
         trace_buffer[trace_index++] = probe_atc(&comp);
         // usleep(1);
     }
-    
-    save_traces();
+
+    save_traces(argv[1]);
 
     return EXIT_SUCCESS;
 }

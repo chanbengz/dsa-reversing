@@ -5,34 +5,27 @@ from tensorflow.keras.layers import Input, Dense, LSTM, Bidirectional, Layer, Dr
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import ConfusionMatrixDisplay, accuracy_score
+from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
 import os
 
 
 # ----- Parameters -----
-sequence_len = 250
-group_size = 400
+sequence_len = 1600
+group_size = 250
 latency_threshold = 700
-websites = [
-    'www.weibo.com',
-    'www.baidu.com',
-    'www.bilibili.com',
-    'www.zhihu.com',
-    'www.163.com',
-    'www.canva.com',
-    'www.microsoft.com',
-    'www.taobao.com',
-    'www.zoom.com',
-    'www.apple.com',
-    'www.douban.com',
-    'www.iqiyi.com',
-    'www.aliyun.com',
-    'www.alipay.com',
-    'www.notion.com',
+modelsUT = [
+    'stories15M',
+    'stories42M',
+    'stories110M',
+    'llama2-7b',
+    'gemma3:1b',
+    'gemma3:4b',
+    'qwen3:4b',
+    'qwen3:1.7b'
 ]
-samples_per_class = 200
-data_dir = "wfdata/"
+samples_per_class = 50
+data_dir = "mldata/"
 
 # ----- Custom Attention Layer -----
 class AttentionLayer(Layer):
@@ -56,9 +49,7 @@ class AttentionLayer(Layer):
 def build_model(input_shape, num_classes):
     inputs = Input(shape=input_shape)
     x = Bidirectional(LSTM(128, return_sequences=True))(inputs)
-    x = Dropout(0.35)(x)
-    x = Bidirectional(LSTM(128, return_sequences=True))(x)
-    x = Dropout(0.3)(x)
+    x = Dropout(0.4)(x)
     x = AttentionLayer()(x)
     x = Dropout(0.26)(x)
     outputs = Dense(num_classes, activation='softmax')(x)
@@ -77,22 +68,13 @@ def preprocess_trace(raw_latencies, group_size=400, threshold=700):
     misses = np.sum(grouped > threshold, axis=1)
     return misses
 
-def clean_website_name(website):
-    """Extract clean website name by removing www. prefix and any TLD suffix"""
-    name = website
-    if name.startswith('www.'):
-        name = name[4:]
-    if '.' in name:
-        name = name.rsplit('.', 1)[0]
-    return name
-
 # ----- Data Loading -----
 X = []
 y = []
 
-for website in websites:
+for model in modelsUT:
     for i in range(1, samples_per_class + 1):
-        filename = f"wf-traces_{website}_{i}.txt"
+        filename = f"ml-traces_{model}_{i}.txt"
         filepath = os.path.join(data_dir, filename)
         try:
             with open(filepath, 'r') as f:
@@ -100,7 +82,7 @@ for website in websites:
                 trace = preprocess_trace(latencies, group_size=group_size, threshold=latency_threshold)
                 if trace is not None:
                     X.append(trace)
-                    y.append(clean_website_name(website))
+                    y.append(model)
                 else:
                     print(f"Skipping {filename}: not enough data")
         except FileNotFoundError:
@@ -128,37 +110,12 @@ early_stop = EarlyStopping(monitor='val_accuracy', patience=10, restore_best_wei
 
 model.fit(X_train, y_train,
           validation_data=(X_test, y_test),
-          epochs=50,
-          batch_size=128,
+          epochs=30,
+          batch_size=32,
           callbacks=[early_stop])
 
 # ----- Confusion Matrix with Probabilities -----
 y_pred_probs = model.predict(X_test)
-
-# Create a probability-based confusion matrix
-# For each true class, average the predicted probabilities
-num_classes = len(encoder.classes_)
-cm_probs = np.zeros((num_classes, num_classes))
-
-for true_class in range(num_classes):
-    mask = (y_test == true_class)
-    if np.sum(mask) > 0:
-        cm_probs[true_class, :] = np.mean(y_pred_probs[mask], axis=0)
-
-# Convert probabilities to percentages
-cm_probs_percent = cm_probs * 100
-
-disp = ConfusionMatrixDisplay(confusion_matrix=cm_probs_percent, display_labels=encoder.classes_)
-
-plt.rcParams['font.family'] = 'Optima'
-fig, ax = plt.subplots(figsize=(12, 10))
-disp.plot(cmap='Blues', ax=ax, values_format=".1f")
-ax.set_xticklabels(ax.get_xticklabels(), fontsize=14, rotation=45, ha='right')
-ax.set_yticklabels(ax.get_yticklabels(), fontsize=14)
-ax.set_xlabel("Predicted Label", fontsize=14)
-ax.set_ylabel("True Label", fontsize=14)
-plt.grid(False)
-plt.savefig('data/confusion-matrix.pdf', format='pdf', bbox_inches='tight')
 
 # Calculate accuracy using argmax of probabilities
 y_pred = np.argmax(y_pred_probs, axis=1)
