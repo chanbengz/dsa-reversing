@@ -26,12 +26,6 @@ static inline int probe_swq() {
     return enqcmd(wq_info.wq_portal, &noop);
 }
 
-static inline int receive() {
-    congest();
-    nsleep(WQ_INTERVAL_NS);
-    return probe_swq();
-}
-
 int main(int argc, char *argv[]) {
     // Initialize work queue
     int rc = map_spec_wq(&wq_info, "/dev/dsa/wq2.0");
@@ -71,7 +65,6 @@ int main(int argc, char *argv[]) {
             congest();
             if (probe_swq()) printf("victim cannot submit\n");
             nsleep(mid);
-            // printf("swq: %s\n", probe_swq() ? "busy" : "idle");
             int rc = probe_swq();
             if (rc) low = mid + 1;
             else high = mid - 1;

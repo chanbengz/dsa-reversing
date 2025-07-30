@@ -2,6 +2,7 @@
 
 #define BLEN (4096ull << 4)
 #define DSA_OP_FLAG_US (1 << 16)
+#define XFER_SIZE 4096
 
 struct wq_info wq_info;
 struct dsa_hw_desc desc = {};
@@ -15,7 +16,7 @@ int main(int argc, char *argv[]) {
 
     desc.opcode = DSA_OPCODE_COMPVAL;
     desc.flags = IDXD_OP_FLAG_CRAV | IDXD_OP_FLAG_RCR;
-    desc.xfer_size = 4096;
+    desc.xfer_size = XFER_SIZE;
     desc.comp_pattern = 0;
     desc.expected_res = 0;
     desc.completion_addr = (uintptr_t) &comp;

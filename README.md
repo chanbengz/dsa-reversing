@@ -4,8 +4,7 @@
 
 </div>
 
-This repos holds the artifact of paper
-"Data Stealth Assassin: Exploiting Intel Data Streaming Accelerator in Side-Channel Attacks".
+This repos holds the artifact of paper "Data Stealth Assassin: Exploiting Intel Data Streaming Accelerator in Side-Channel Attacks".
 
 > [!WARNING]
 > We're organizing the artifacts and docs for reproducing. Stay tuned.
@@ -16,18 +15,17 @@ This repos holds the artifact of paper
 dsa-reversing
 ├── attack     # Attack experiments
 ├── evaluate   # Evaluation scripts
-├── ISSUE.md   # Issues and FAQ
+├── ISSUE.md   # FAQ
 ├── LICENSE
 ├── playground # Reverse-engineering
-│   ├── atc # DevTLB
-│   ├── deprecated # Deprecated experiments that not included in the paper
-│   ├── README.md
-│   └── wq # Shared work queue
+│   ├── atc    # DevTLB
+│   └── wq     # Shared work queue
 ├── README.md
-└── setup
+└── setup      # Environment setup
     ├── config
     ├── dto
     ├── vpp
+    ├── Dockerfile.*
     └── setup_dsa.sh
 ```
 
@@ -37,8 +35,7 @@ dsa-reversing
 > This experiment requires Ubuntu 24.04 LTS and Intel 4th Gen Xeon Scalable (or newer) who
 > has DSA integration. Root privilege is required to setup and run the experiment.
 
-Make sure the driver of DSA and VT-d is properly installed and configured during bootup.
-The following command do output something to verify that they're working.
+Make sure the driver of DSA and VT-d is properly installed and configured during bootup. The following command do output something to verify that they're working.
 
 ```bash
 # check if DSA is enabled
@@ -66,8 +63,7 @@ sudo chmod 766 /dev/dsa/*
 
 ## Playing with DSA
 
-`playground` holds the experiment sources. For example, in `playground/wq` you can find
-the source code of the workload queue (WQ) experiment.
+`playground` holds the experiment sources. For example, in `playground/wq` you can find the source code of the workload queue (WQ) experiment.
 
 ```bash
 cd playground/wq && mkdir -p build # or playground/atc
@@ -82,8 +78,7 @@ See [attack/README.md](attack/README.md) for attack experiments.
 
 ## Issues
 
-If you encounter any issue, please see [ISSUE.md](ISSUE.md) first.
-Open an issue if it doesn't help.
+If you encounter any issue, please see [ISSUE.md](ISSUE.md) first. Open an issue if it doesn't help.
 
 ## Reference
 
@@ -94,6 +89,4 @@ Open an issue if it doesn't help.
 
 ## Disclaimer
 
-We provide this code as-is, for academic purpose only.
-You are responsible for protecting yourself, your property and privacy.
-Any risks or damage caused by this code will not be covered.
+We provide this code as-is, for academic purpose only. You are responsible for protecting yourself, your property and privacy. Any risks or damage caused by this code will not be covered.
