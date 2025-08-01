@@ -3,7 +3,7 @@ import numpy as np
 
 websites = [
     'www.baidu.com',
-    'www.amazon.com',
+    'www.apple.com',
     'www.microsoft.com',
 ]
 
@@ -14,7 +14,7 @@ num_buckets = total_traces // traces_per_bucket
 
 # Colors for different websites
 colors = ['#1f77b4', '#ff7f0e', '#2ca02c']  # Blue, Orange, Green
-website_labels = ['baidu.com', 'amazon.com', 'microsoft.com']
+website_labels = ['baidu.com', 'apple.com', 'microsoft.com']
 
 plt.rcParams['font.family'] = 'Optima'
 plt.figure(figsize=(8, 3))
@@ -38,12 +38,12 @@ for i, website in enumerate(websites):
     
     # Plot the results
     bucket_numbers = np.arange(num_buckets)
-    plt.plot(bucket_numbers, bucket_counts, linewidth=1, alpha=0.8, color=colors[i], label=website_labels[i])
+    plt.plot(bucket_numbers, bucket_counts, linewidth=2, alpha=0.8, color=colors[i], label=website_labels[i])
 
 plt.xlabel('Time Slot', fontsize=16)
 plt.ylabel('DevTLB Miss', fontsize=16)
-plt.tick_params(axis='both', which='major', labelsize=13)
-plt.legend(fontsize=12)
+plt.tick_params(axis='both', which='major', labelsize=14)
+plt.legend(fontsize=14)
 plt.grid(True, linestyle='--', linewidth=0.5, alpha=0.7)
 plt.margins(x=0, y=0)
 

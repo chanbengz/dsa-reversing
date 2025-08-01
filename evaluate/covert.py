@@ -33,16 +33,16 @@ def draw_graph():
     fig, ax1 = plt.subplots(figsize=(5, 4))
     ax2 = ax1.twinx()
 
-    ax1.tick_params(axis='x', labelsize=13)
-    ax1.set_xlabel('Raw Capacity (kbps)', fontsize=16, color='black')
+    ax1.tick_params(axis='x', labelsize=16)
+    ax1.set_xlabel('Raw Capacity (kbps)', fontsize=20, color='black')
 
-    ax1.plot(capc, true_capc, marker=None, linestyle='-', color='#4285F4', linewidth=2, label='True Capacity (kbps)')
-    ax1.set_ylabel('True Capacity (kbps)', fontsize=16, color='black')
-    ax1.tick_params(axis='y', labelcolor="#1765E2", labelsize=13)
-    
-    ax2.plot(capc, errors, marker=None, linestyle='--', color='#EA4335', linewidth=2, label='Error Rate')
-    ax2.set_ylabel('Error Rate', fontsize=16, color='black')
-    ax2.tick_params(axis='y', labelcolor='#EA4335', labelsize=13)
+    ax1.plot(capc, true_capc, marker=None, linestyle='-', color='#4285F4', linewidth=3, label='True Capacity (kbps)')
+    ax1.set_ylabel('True Capacity (kbps)', fontsize=20, color='black')
+    ax1.tick_params(axis='y', labelcolor="#1765E2", labelsize=16)
+
+    ax2.plot(capc, errors, marker=None, linestyle='--', color='#EA4335', linewidth=3, label='Error Rate')
+    ax2.set_ylabel('Error Rate', fontsize=20, color='black')
+    ax2.tick_params(axis='y', labelcolor='#EA4335', labelsize=16)
     
     ax1.spines['bottom'].set_color('black')
     

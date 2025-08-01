@@ -33,6 +33,7 @@ websites = [
 ]
 samples_per_class = 200
 data_dir = "wfdata/"
+# full_websites = open("../attack/top100.txt", "r").read().splitlines()
 
 # ----- Custom Attention Layer -----
 class AttentionLayer(Layer):
@@ -148,15 +149,17 @@ for true_class in range(num_classes):
 # Convert probabilities to percentages
 cm_probs_percent = cm_probs * 100
 
+
 disp = ConfusionMatrixDisplay(confusion_matrix=cm_probs_percent, display_labels=encoder.classes_)
 
 plt.rcParams['font.family'] = 'Optima'
+plt.rcParams.update({'font.size': 14})
 fig, ax = plt.subplots(figsize=(12, 10))
 disp.plot(cmap='Blues', ax=ax, values_format=".1f")
-ax.set_xticklabels(ax.get_xticklabels(), fontsize=14, rotation=45, ha='right')
-ax.set_yticklabels(ax.get_yticklabels(), fontsize=14)
-ax.set_xlabel("Predicted Label", fontsize=14)
-ax.set_ylabel("True Label", fontsize=14)
+ax.set_xticklabels(ax.get_xticklabels(), fontsize=16, rotation=45, ha='right')
+ax.set_yticklabels(ax.get_yticklabels(), fontsize=16)
+ax.set_xlabel("Predicted Label", fontsize=20)
+ax.set_ylabel("True Label", fontsize=20)
 plt.grid(False)
 plt.savefig('data/confusion-matrix.pdf', format='pdf', bbox_inches='tight')
 
