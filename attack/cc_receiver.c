@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     }
     memset(comp_array, 0, COMP_ARRAY_SIZE);
     
-    int rc = map_spec_wq(&wq_info, "/dev/dsa/wq2.0");
+    int rc = map_spec_wq(&wq_info, "/dev/dsa/wq0.0");
     if (rc) {
         fprintf(stderr, "[cc_receiver] Failed to map work queue: %d\n", rc);
         return EXIT_FAILURE;

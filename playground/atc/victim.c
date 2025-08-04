@@ -38,21 +38,13 @@ int main(int argc, char *argv[]) {
     printf("Cache miss: %ld\n", miss_t / WARMUP_TESTS);
     printf("Cache hit:  %ld\n", hit_t / WARMUP_TESTS);
 
-    // Different tests
-    switch (argc) {
-    case 2:
-        probe(base); // let base be in cache
-        printf("Sleeping %s seconds\n", argv[1]);
-        printf("start: %ld\n", probe(base));
-        sleep(atoi(argv[1]));
-        __builtin_ia32_lfence();
-        printf("end:   %ld\n", probe(base));
-        break;
+    probe(base); // let base be in cache
+    printf("Sleeping %s seconds\n", argv[1]);
+    printf("start: %ld\n", probe(base));
+    sleep(atoi(argv[1]));
+    __builtin_ia32_lfence();
+    printf("end:   %ld\n", probe(base));
 
-    default:
-        printf("Usage: %s [sleep_time]\n", argv[0]);
-        return EXIT_FAILURE;
-    }
 
     return 0;
 }

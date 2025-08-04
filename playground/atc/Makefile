@@ -16,8 +16,7 @@ debug: $(TARGET).c build
 build: $(TARGET).c
 	mkdir -p build
 	$(CC) $(TARGET).c -o build/$(TARGET) $(CFLAGS) $(LDFLAGS) -g
-	# sudo setcap cap_sys_rawio+ep ./build/$(TARGET)
-	# disable this for now because it's not needed for the attack
+	sudo setcap cap_sys_rawio+ep ./build/$(TARGET)
 
 $(EXES):%:%.c $(DEPS)
 	$(CC) -o build/$@ $< $(CFLAGS) $(LDFLAGS)

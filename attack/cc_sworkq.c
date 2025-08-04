@@ -21,7 +21,7 @@ void send_char(char c) {
 
 int main() {
     // Initialize work queue
-    int rc = map_spec_wq(&wq_info, "/dev/dsa/wq2.0");
+    int rc = map_spec_wq(&wq_info, "/dev/dsa/wq0.0");
     if (rc) {
         fprintf(stderr, "[wq_spy] Failed to map work queue: %d\n", rc);
         return EXIT_FAILURE;

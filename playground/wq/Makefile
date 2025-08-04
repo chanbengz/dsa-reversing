@@ -9,6 +9,7 @@ buildall: $(EXES)
 
 build: $(TARGET).c 
 	$(CC) $(TARGET).c -o build/$(TARGET) $(CFLAGS) $(LDFLAGS)
+	sudo setcap cap_sys_rawio+ep ./build/$(TARGET)
 
 run: $(TARGET).c build
 	sudo ./build/$(TARGET)

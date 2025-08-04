@@ -40,6 +40,9 @@ taskset -c <core_id> <your_dsa_process>
 To get the core ID, you can use `numactl -H` to list the available cores and their NUMA nodes.
 Normally, `dsa0` will locate on the numa node 0, and `dsa2` will locate on the numa node 1.
 
-## `attack-rs` fail to reproduce
+## Experiments Failed to Replicate with Expected Results
 
-Rust implmentation is unstable now.
+For reverse-engineering experiments, ensure that you have the DSA 1.0 on 4th or 5th Xeon. The results are fixed in these environments.
+Report the issue if you found any unexpected results or they're inconsistent with paper/documentation in this artifact.
+
+For case-study attacks. You need to tune the parameters in the code to match your environment. Tuning guide can be found in the README of `attack` directory.

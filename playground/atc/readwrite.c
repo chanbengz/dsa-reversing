@@ -22,8 +22,8 @@ int main(int argc, char *argv[]) {
     memset(dst, 0, BLEN * 3);
 
     int rc = submit_wd(src, dst);
-    rc |= submit_wd(src, dst + BLEN); // hit twice
-    rc |= submit_wd(src, dst);        // hit twice
+    rc |= submit_wd(src, dst + 4096); // hit 2 times
+    rc |= submit_wd(src, dst);        // hit 2 times
     rc |= submit_wd(src, dst);        // hit 3 times
 
     return rc;

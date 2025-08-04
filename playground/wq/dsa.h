@@ -64,7 +64,7 @@ static int map_wq(struct wq_info *wq_info) {
     struct accfg_ctx *ctx;
     struct accfg_wq *wq;
     struct accfg_device *device;
-    char path[PATH_MAX] = "/dev/dsa/wq2.0";
+    char path[PATH_MAX] = "/dev/dsa/wq0.0";
     int fd;
     wq_portal = MAP_FAILED;
 

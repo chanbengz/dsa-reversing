@@ -1,9 +1,9 @@
 #include "dsa.h"
 
 #define CALIBRATION_RUNS 10000
-#define ATTACK_INTERVAL_US 10
 #define DIFF_THRESHOLD 300
 #define CALIBRATION_RETRIES 5
+#define ATTACK_INTERVAL_US 10
 #define TRACE_BUFFER_SIZE 100000 // 400000
 
 #define UPDATE_THRESHOLD(hit, miss) ((hit * 34 + miss * 66) / 100)

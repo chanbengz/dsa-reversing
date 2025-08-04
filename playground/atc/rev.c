@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (argc != 2) {
-        printf("Usage: %s <0: offset, 1: addr, 2: evict>\n", argv[0]);
+        printf("Usage: %s <0: offset, 1: addr, 2: plot>\n", argv[0]);
         return 1;
     }
 
@@ -67,16 +67,8 @@ int main(int argc, char *argv[]) {
         printf("%p: %ld\n", &arr_onbss, results[2] / TESTS_PER_PROBE);
         printf("%p: %ld\n", base, results[3] / TESTS_PER_PROBE);
         break;
-    // Experiment 3: Trial of second level DevTLB
+    // Experiment 3: collect latencies of hit and miss
     case 2:
-        for (int i = 0; i < TESTS_PER_PROBE; i++) {
-            for (int j = 0; j < EVCTION_SETS; j++) probe(base + (4096L << j));
-            result += probe(base);
-        }
-        printf("evict trial: %ld\n", result / TESTS_PER_PROBE);
-        break;
-    // collect latencies of hit and miss
-    case 3:
         FILE *hit_file = fopen("devtlb-hit.txt", "w");
         FILE *miss_file = fopen("devtlb-miss.txt", "w");
         for (int i = 0; i < NUM_TRACES; i++) {

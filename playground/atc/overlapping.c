@@ -45,7 +45,7 @@ uint64_t probe_memcpy(void *src, void *dst) {
     return end - start;
 }
 
-uint64_t probe_memcmp(void *src, void *dst) {
+uint64_t probe_memcmp(void *src, void *src2) {
     uint64_t start, end; int retry = 0;
 
     // Initialize the descriptor
@@ -53,7 +53,7 @@ uint64_t probe_memcmp(void *src, void *dst) {
 
     comp.status = 0;
     desc.src_addr = (uintptr_t) src;
-    desc.src2_addr = (uintptr_t) dst;
+    desc.src2_addr = (uintptr_t) src2;
     desc.xfer_size = 8;
     desc.expected_res = 0;
     desc.completion_addr = (uintptr_t) &comp;
@@ -92,9 +92,9 @@ int main(int argc, char *argv[]) {
     desc.flags = IDXD_OP_FLAG_CRAV | IDXD_OP_FLAG_RCR;
 
     probe_memcpy(probe_arr, probe_arr2);
-    probe_memcmp(probe_arr, probe_arr2);
-    probe_memcpy(probe_arr, probe_arr2);
-    probe_memcmp(probe_arr, probe_arr2);
+    probe_memcmp(probe_arr, probe_arr2); // 2 hits
+    probe_memcpy(probe_arr, probe_arr2); // 3 hits
+    probe_memcmp(probe_arr, probe_arr2); // 3 hits
 
     return 0;
 }

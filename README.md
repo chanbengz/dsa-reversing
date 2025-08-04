@@ -1,13 +1,10 @@
 <div align=center>
 
-# Data Stealth Assassin: Exploiting Intel Data Streaming Accelerator in Side-Channel Attacks
+# DSASSASSIN: Cross-VM Side-Channel Attacks by Exploiting Intel Data Streaming Accelerator
 
 </div>
 
-This repos holds the artifact of paper "Data Stealth Assassin: Exploiting Intel Data Streaming Accelerator in Side-Channel Attacks".
-
-> [!WARNING]
-> We're organizing the artifacts and docs for reproducing. Stay tuned.
+This repos holds the artifact of paper "DSASSASSIN: Cross-VM Side-Channel Attacks by Exploiting Intel Data Streaming Accelerator".
 
 ## Structure
 
@@ -45,6 +42,8 @@ sudo lspci -vvv -s 6a:01.0
 # check if VT-d is supported
 cat /sys/bus/dsa/devices/dsa0/pasid_enabled
 ```
+
+If you didn't see output from the above commands, see [user guide](https://www.intel.com/content/www/us/en/content-details/759709/intel-data-streaming-accelerator-user-guide.html) chapter 12 for troubleshooting.
 
 Setup `libaccel-config`
 
@@ -89,4 +88,4 @@ If you encounter any issue, please see [ISSUE.md](ISSUE.md) first. Open an issue
 
 ## Disclaimer
 
-We provide this code as-is, for academic purpose only. You are responsible for protecting yourself, your property and privacy. Any risks or damage caused by this code will not be covered.
+We provide this code as-is, for research purpose only. You are responsible for protecting yourself, your property and privacy. Any risks or damage caused by this code will not be covered.
