@@ -12,7 +12,7 @@ This repos holds the artifact of paper "DSASSASSIN: Cross-VM Side-Channel Attack
 dsa-reversing
 ├── attack     # Attack experiments
 ├── evaluate   # Evaluation scripts
-├── ISSUE.md   # FAQ
+├── ISSUES.md   # FAQ
 ├── LICENSE
 ├── playground # Reverse-engineering
 │   ├── atc    # DevTLB
@@ -38,17 +38,23 @@ Make sure the driver of DSA and VT-d is properly installed and configured during
 # check if DSA is enabled
 sudo dmesg | grep "idxd "
 sudo lspci | grep 0b25
-sudo lspci -vvv -s 6a:01.0
 # check if VT-d is supported
 cat /sys/bus/dsa/devices/dsa0/pasid_enabled
 ```
 
 If you didn't see output from the above commands, see [user guide](https://www.intel.com/content/www/us/en/content-details/759709/intel-data-streaming-accelerator-user-guide.html) chapter 12 for troubleshooting.
 
-Setup `libaccel-config`
+Setup `accel-config / libaccel-config` and its dependencies.
 
 ```bash
-sudo apt install libaccel-config-dev libaccel-config1
+sudo apt install accel-config libaccel-config-dev libaccel-config1
+sudo apt install uuid-dev
+```
+
+Clone this repo.
+
+```bash
+git clone https://github.com/chanbengz/dsa-reversing.git --recurse-submodules
 ```
 
 Enable DSA with configuration (`sudo` required), and grant read/write priviledge to user.
@@ -77,7 +83,7 @@ See [attack/README.md](attack/README.md) for attack experiments.
 
 ## Issues
 
-If you encounter any issue, please see [ISSUE.md](ISSUE.md) first. Open an issue if it doesn't help.
+If you encounter any issue, please see [ISSUES.md](ISSUES.md) first. Open an issue if it doesn't help.
 
 ## Reference
 

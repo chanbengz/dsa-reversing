@@ -11,7 +11,7 @@ For real-world attacks, we opt for these attack scenarios:
 0. Setup DSA
 ```bash
 cd $(ROOTDIR)/setup
-sudo ./set_dsa.sh config/dpdk.conf
+sudo ./setup_dsa.sh config/dpdk.conf
 ```
 
 1. Build the VPP image with DPDK support. Since DPDK is not standalone, we select one of the most active DPDK-based projects, VPP (Vector Packet Processing), to build the image.
@@ -137,7 +137,7 @@ Setup DSA
 
 ```bash
 cd $(ROOTDIR)/setup
-sudo ./set_dsa.sh config/common.conf
+sudo ./setup_dsa.sh config/common.conf
 ```
 
 Fetch DTO library and DSA reversing tools
@@ -275,7 +275,7 @@ Setup DSA
 
 ```bash
 cd $(ROOTDIR)/setup
-sudo ./set_dsa.sh config/common.conf
+sudo ./setup_dsa.sh config/common.conf
 ```
 
 Build the binaries and run the covert channel
@@ -301,7 +301,7 @@ To enable multithreading transmission, setup DSA first
 
 ```bash
 cd $(ROOTDIR)/setup
-sudo ./set_dsa.sh config/full.conf
+sudo ./setup_dsa.sh config/full.conf
 ```
 
 ### Tuning

@@ -46,10 +46,10 @@ Setup the DSA with
 
 ```bash
 cd $(ROOTDIR)/setup
-sudo ./set_dsa.sh config/one_engine.conf
+sudo ./setup_dsa.sh config/one_engine.conf
 
 # For E2 in Fig. 5
-sudo ./set_dsa.sh config/two_engines.conf
+sudo ./setup_dsa.sh config/two_engines.conf
 ```
 
 To replicate the experiments, build and run with `perf`. For example, to run the `rev` in the table
