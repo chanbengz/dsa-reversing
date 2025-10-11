@@ -46,6 +46,9 @@ Setup the DSA with
 
 ```bash
 cd $(ROOTDIR)/setup
+sudo ./setup_dsa.sh config/common.conf
+
+# For E0/E1 in Fig. 5
 sudo ./setup_dsa.sh config/one_engine.conf
 
 # For E2 in Fig. 5
@@ -76,6 +79,11 @@ sudo perf stat -e dsa0/event=0x100,event_category=0x2/ -a ./build/rev
 This experiment benchmarks the latencies of submission and completion and reverse-engineers the arbiter policy between work and batch descriptors. Finally, we implemented an automatic discovery of the maximum window size of congestion.
 
 ### Experiments
+
+```bash
+cd $(ROOTDIR)/setup
+sudo ./setup_dsa.sh config/common.conf
+```
 
 | Source | Description | What it does | Expected Result |
 |--------|-------------|--------------|-----------------|

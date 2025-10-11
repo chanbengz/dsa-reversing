@@ -7,7 +7,8 @@ EXES = $(patsubst %.c, %, $(SRCS))
 
 buildall: $(EXES)
 
-build: $(TARGET).c 
+build: $(TARGET).c
+	mkdir -p build
 	$(CC) $(TARGET).c -o build/$(TARGET) $(CFLAGS) $(LDFLAGS)
 	sudo setcap cap_sys_rawio+ep ./build/$(TARGET)
 

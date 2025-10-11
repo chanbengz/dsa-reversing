@@ -60,7 +60,10 @@ git clone https://github.com/chanbengz/dsa-reversing.git --recurse-submodules
 Enable DSA with configuration (`sudo` required), and grant read/write priviledge to user.
 
 ```bash
+export ROOTDIR=$(pwd)/dsa-reversing
+cd $ROOTDIR && chmod +x setup/*.sh
 sudo ./setup/setup_dsa.sh setup/config/some_config.conf
+
 # or manually
 sudo accel-config load-config -c setup/config/some_config.conf -e
 sudo chmod 766 /dev/dsa/*
