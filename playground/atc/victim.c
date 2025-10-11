@@ -11,8 +11,8 @@ int probe_count = 0;
 #define WARMUP_TESTS 10000
 
 int main(int argc, char *argv[]) {
-    if (argc > 3) {
-        printf("Usage: %s [sleep_time]\n", argv[0]);
+    if (argc != 2) {
+        printf("Usage: %s [sleep_time_in_secs]\n", argv[0]);
         return EXIT_FAILURE;
     }
 

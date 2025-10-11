@@ -1,5 +1,4 @@
 #include "dsa.h"
-#include <stdint.h>
 
 #define TEST_NUM 18
 

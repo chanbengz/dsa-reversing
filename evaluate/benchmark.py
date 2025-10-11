@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+environ = "cloud" # native or cloud
+
 x = [2**i for i in range(12, 30)]
-y_sub = np.fromfile("data/submission.txt", dtype=int, sep="\n")
-y_wait = np.fromfile("data/wait.txt", dtype=int, sep="\n")
-y_async = np.fromfile("data/async.txt", dtype=int, sep="\n")
+y_sub = np.fromfile(f"data/submission-{environ}.txt", dtype=int, sep="\n")
+y_wait = np.fromfile(f"data/wait-{environ}.txt", dtype=int, sep="\n")
+y_async = np.fromfile(f"data/async-{environ}.txt", dtype=int, sep="\n")
 
 assert len(x) == len(y_sub) == len(y_wait)
 
@@ -29,5 +31,5 @@ ax.spines['bottom'].set_color('black')
 
 plt.tick_params(axis='both', which='major', labelsize=12)
 
-plt.savefig('data/benchmark.pdf', bbox_inches='tight')
+plt.savefig(f'data/benchmark-{environ}.pdf', bbox_inches='tight')
 plt.close()
