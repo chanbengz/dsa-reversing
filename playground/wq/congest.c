@@ -1,16 +1,16 @@
 #include "dsa.h"
 
-#define XFER_SIZE (1L << 26)
+#define XFER_SIZE (1L << 28)
 #define WQ_SIZE 7
-const int TIMESTAMP_ENABLED = 1;
+#define END_RANGE 28
+#define TRIAL 4
 
+uint8_t *src, *dst;
 struct wq_info wq_info;
 struct dsa_hw_desc noop = {}, mass[WQ_SIZE] = {}, noops[WQ_SIZE] = {};
 struct dsa_completion_record comp __attribute__((aligned(32))) = {}, \
-    mass_comp[WQ_SIZE] __attribute__((aligned(32))) = {}, \
-    noops_comp[WQ_SIZE] __attribute__((aligned(32))) = {};
-uint8_t *src, *dst;
-double time_elapsed = 0.0;
+       mass_comp[WQ_SIZE]  __attribute__((aligned(32))) = {}, \
+       noops_comp[WQ_SIZE] __attribute__((aligned(32))) = {};
 
 static inline void congest() {
     mass_comp[0].status = 0;
@@ -22,11 +22,18 @@ static inline void congest() {
     }
 }
 
-static inline int probe_swq() {
-    return enqcmd(wq_info.wq_portal, &noop);
-}
+static inline int probe_swq() { return enqcmd(wq_info.wq_portal, &noop); }
 
 int main(int argc, char *argv[]) {
+    int target_interval = 1000000;
+    if (argc == 2) {
+        target_interval = atoi(argv[1]);
+        printf("Using interval: %d ns\n", target_interval);
+    } else {
+        printf("Usage: %s <interval_ns>\n", argv[0]);
+        return -1;
+    }
+    
     // Initialize work queue
     int rc = map_spec_wq(&wq_info, "/dev/dsa/wq0.0");
     if (rc) {
@@ -55,24 +62,37 @@ int main(int argc, char *argv[]) {
         noops[i].flags = IDXD_OP_FLAG_CRAV | IDXD_OP_FLAG_RCR;
         noops[i].completion_addr = (uintptr_t) &noops_comp[i];
     }
-    
-    for (int i = 15; i < 28; i++) {
-        mass[0].xfer_size = (1L << i);
-        int low = 0, high = INT32_MAX;
 
-        while (low < high) {
-            int mid = (low + high) / 2;
+    int low = 0, high = (1 << END_RANGE);
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        mass[0].xfer_size = mid;
+        
+        int tmp = 0;
+        for (int i = 0; i < TRIAL; i++) {
             congest();
-            if (probe_swq()) printf("victim cannot submit\n");
-            nsleep(mid);
-            int rc = probe_swq();
-            if (rc) low = mid + 1;
-            else high = mid - 1;
-            usleep(1);
+            nsleep(1000);
+            comp.status = 0;
+            if (probe_swq()) printf("victim cannot submit initially\n");
+            nsleep(target_interval - 1000);
+            if (probe_swq()) tmp++;
+            else break;
+            while (comp.status == 0);
         }
 
-        printf("Xfer size 2^%d Interval: %d\n", i, low);
+        if (tmp == TRIAL) high = mid - 1;
+        else low = mid + 1;
     }
+
+    mass[0].xfer_size = low;
+    congest();
+
+    nsleep(1000);
+    if (probe_swq()) printf("victim cannot submit initially\n");
+    nsleep(target_interval - 1000);
+
+    if (probe_swq()) printf("verified size: %d\n", low);
+    else printf("invalid!\n");
 
     return EXIT_SUCCESS;
 }

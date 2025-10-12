@@ -1,14 +1,14 @@
 #include "dsa.h"
 
-#define XFER_SIZE (1L << 21)
+#define XFER_SIZE (1 << 28)
 #define WQ_SIZE 7
-const int TIMESTAMP_ENABLED = 1;
+#define TRIAL 4
 
 struct wq_info wq_info;
 struct dsa_hw_desc noop = {}, mass[WQ_SIZE] = {}, noops[WQ_SIZE] = {};
 struct dsa_completion_record comp __attribute__((aligned(32))) = {}, \
-    mass_comp[WQ_SIZE] __attribute__((aligned(32))) = {}, \
-    noops_comp[WQ_SIZE] __attribute__((aligned(32))) = {};
+       mass_comp[WQ_SIZE] __attribute__((aligned(32))) = {}, \
+       noops_comp[WQ_SIZE] __attribute__((aligned(32))) = {};
 uint8_t *src, *dst;
 double time_elapsed = 0.0;
 
@@ -28,7 +28,7 @@ static inline int probe_swq() {
 
 static inline int receive() {
     congest();
-    nsleep(WQ_INTERVAL_NS);
+    nsleep(WQ_INTERVAL_NS - 10000);
     return probe_swq();
 }
 
@@ -54,13 +54,33 @@ int main(int argc, char *argv[]) {
         mass[i].src_addr = (uintptr_t) src;
         mass[i].dst_addr = (uintptr_t) dst;
         mass[i].xfer_size = XFER_SIZE;
-        mass_comp[i].status = 0;
         mass[i].completion_addr = (uintptr_t) &mass_comp[i];
-
         noops[i].opcode = DSA_OPCODE_NOOP;
         noops[i].flags = IDXD_OP_FLAG_CRAV | IDXD_OP_FLAG_RCR;
         noops[i].completion_addr = (uintptr_t) &noops_comp[i];
     }
+
+    int low = 0, high = XFER_SIZE;
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        mass[0].xfer_size = mid;
+        
+        int tmp = 0;
+        for (int i = 0; i < TRIAL; i++) {
+            congest();
+            nsleep(1000);
+            comp.status = 0;
+            if (probe_swq()) printf("victim cannot submit initially\n");
+            nsleep(WQ_INTERVAL_NS - 1000);
+            if (probe_swq()) tmp++;
+            else break;
+            while (comp.status == 0);
+        }
+
+        if (tmp == TRIAL) high = mid - 1;
+        else low = mid + 1;
+    }
+    mass[0].xfer_size = low;
 
     struct timespec ts;
     char msg[CHARS_TO_RECEIVE];
@@ -73,6 +93,8 @@ int main(int argc, char *argv[]) {
             if (consecutive_bits >= START_BITS) break;
         }
 
+        // sync
+        while (noops_comp[WQ_SIZE - 3].status == 0) _mm_pause();
         clock_gettime(CLOCK_MONOTONIC, &ts);
         double start_time = (double) ts.tv_sec + (double) ts.tv_nsec / 1e9;
 

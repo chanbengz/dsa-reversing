@@ -11,9 +11,7 @@ void send_char(char c) {
         int bit = (c >> i) & 1;
         for(int i = 0; i < BITS_REPEAT; i++) {
             uint64_t start = rdtsc();
-            if (bit) {
-                send_bit();
-            }
+            if (bit) { send_bit(); }
             while (rdtsc() - start < WQ_INTERVAL_NS);
         }
     }
@@ -32,6 +30,7 @@ int main() {
     desc.completion_addr = (uintptr_t) &comp;
 
     char message[CHARS_TO_RECEIVE];
+
     FILE *fp = fopen("msg", "rb");
     if (!fp) {
         fprintf(stderr, "[cc_sender] Failed to open message file\n");
@@ -40,19 +39,22 @@ int main() {
     size_t message_len = fread(message, 1, CHARS_TO_RECEIVE, fp);
     fclose(fp);
 
-    printf("[cc_sender] Ready to send: %c\n", message[0]);
-
-    for (int i = 0; i < message_len; i++) {
-        // scanf("%*c"); // Wait for user input to send next char
+restart:
+    for (int i = 0; i < CHARS_TO_RECEIVE; i++) {
         for (int j = 0; j < START_BITS; j++) {
-            send_bit();
-            nsleep(WQ_INTERVAL_NS - 10000);
+            comp.status = 0;
+            if (enqcmd(wq_info.wq_portal, &desc)) {
+                printf("failed to enqueue sync noop at char %d\n", i);
+                nsleep(10000);
+                goto restart;
+            }
+            nsleep(WQ_INTERVAL_NS);
         }
 
-        _mm_mfence();
-        nsleep(10000); // receiver needs to record time
+        while (comp.status == 0) _mm_pause();
+        nsleep(40000);
         send_char(message[i]);
-        nsleep(100000); // Give some time for the receiver to process
+        nsleep(30000);
     }
 
     return 0;

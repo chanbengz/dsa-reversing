@@ -57,6 +57,7 @@ dkms.conf
 */.DS_Store
 */*/.DS_Store
 
-# Backup files
+# Raw data
+ccdata
 wfdata
 mldata

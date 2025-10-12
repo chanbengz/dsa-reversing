@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-environ = "cloud" # "native" or "cloud"
+environ = "native" # "native" or "cloud"
 noisy = "-noisy"
 low_bound = 250
-upper_bound = 1500
+upper_bound = 1200
 
 hit = np.fromfile(f"data/devtlb-hit-{environ}{noisy}.txt", dtype=int, sep="\n")
 miss = np.fromfile(f"data/devtlb-miss-{environ}{noisy}.txt", dtype=int, sep="\n")

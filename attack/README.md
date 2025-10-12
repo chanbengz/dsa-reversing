@@ -289,15 +289,13 @@ make covert
 Evaluate the results
 
 ```bash
-cd $(ROOTDIR)/evaluate
-mv ../attack/msg ./ccdata
-python3 covert.py
+python3 covert.py -a atc -f eval
 ```
 
 This script also plots the results of multiple configurations, but for now we manually record the
-data and fill in the script with the results. Uncomment the `draw_graph()` line in `covert.py` to plot the results.
+data and fill in the script with the results.
 
-To enable multithreading transmission, setup DSA first
+To enable multithreading transmission, setup DSA at first, and then repeat above steps
 
 ```bash
 cd $(ROOTDIR)/setup
