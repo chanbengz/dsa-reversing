@@ -13,7 +13,8 @@ args =  parser.parse_args()
 
 app = args.a
 NUM_TRACES = 50
-num_bits = 16 * NUM_TRACES * 8
+NUM_BITS_PER_SAMPLE = 16 * 8
+num_bits = NUM_TRACES * NUM_BITS_PER_SAMPLE
 true_cap = lambda c, e: c * (1 + (1 - e) * math.log2(1 - e) + e * math.log2(e))
 
 def eval_error():
@@ -32,8 +33,8 @@ def eval_confidence_interval(times: list):
     for i in range(1, NUM_TRACES + 1):
         recv = open(f"ccdata/recv_{i}", "rb").read()
         bits_err = sum(bin(x ^ y).count('1') for x, y in zip(std, recv))
-        sample_error_rate = bits_err / (16 * 8)
-        raw_capacity = (16 * 8) / avg_time
+        sample_error_rate = bits_err / NUM_BITS_PER_SAMPLE
+        raw_capacity = NUM_BITS_PER_SAMPLE / avg_time
         if sample_error_rate == 0:
             sample_true_capacity = raw_capacity
         else:
@@ -100,14 +101,14 @@ if args.f == 'draw':
         errors = [0.04630, 0.03780, 0.0718, 0.08050, 0.04080, 0.03500, 0.1342, 0.0710, 0.19130, 0.06780, 0.3570000, 0.4157]
     else:
     # SWQ
-        times  = [0.268234]
-        errors = [0.1209]
+        times  = [0.2682, 0.2055, 0.1615, 0.1080, 0.0795, 0.0544, 0.0440, 0.0285, 0.0193, 0.0139, 0.0086, 0.0062]
+        errors = [0.1201, 0.1105, 0.1293, 0.1340, 0.1590, 0.1450, 0.1508, 0.1513, 0.1314, 0.1311, 0.2680, 0.2586]
         times  = [t * 50 for t in times]
     draw_graph(times, errors)
 elif args.f == 'eval':
     error_rate = eval_error()
     print(f"Overall error rate: {error_rate:.4f}")
-    times_t = [0.268234] * NUM_TRACES
+    times_t = []
     results = eval_confidence_interval(times_t)
     print(f"Mean true capacity: {results['mean']:.2f} bps")
     print(f"Standard deviation: {results['std']:.2f} bps")

@@ -44,17 +44,17 @@ restart:
         for (int j = 0; j < START_BITS; j++) {
             comp.status = 0;
             if (enqcmd(wq_info.wq_portal, &desc)) {
-                printf("failed to enqueue sync noop at char %d\n", i);
-                nsleep(10000);
+                // printf("failed to enqueue sync noop at char %d\n", i);
+                usleep(1000);
                 goto restart;
             }
             nsleep(WQ_INTERVAL_NS);
         }
 
         while (comp.status == 0) _mm_pause();
-        nsleep(40000);
+        nsleep(35000);
         send_char(message[i]);
-        nsleep(30000);
+        nsleep(35000);
     }
 
     return 0;

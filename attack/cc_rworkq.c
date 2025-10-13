@@ -28,7 +28,7 @@ static inline int probe_swq() {
 
 static inline int receive() {
     congest();
-    nsleep(WQ_INTERVAL_NS - 10000);
+    nsleep(WQ_INTERVAL_NS - 20000);
     return probe_swq();
 }
 

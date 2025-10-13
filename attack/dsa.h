@@ -23,7 +23,7 @@
 #define START_BITS 2
 #define CHARS_TO_RECEIVE 16
 #define BITS_TO_RECEIVE 8
-#define WQ_INTERVAL_NS 5000000
+#define WQ_INTERVAL_NS 250000
 
 struct wq_info {
     bool wq_mapped;
