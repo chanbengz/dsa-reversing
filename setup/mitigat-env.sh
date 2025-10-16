@@ -1,0 +1,9 @@
+export DTO_USESTDC_CALLS=0
+export DTO_COLLECT_STATS=0
+export DTO_WAIT_METHOD=busypoll
+export DTO_CPU_SIZE_FRACTION=0
+export DTO_MIN_BYTES=0
+export DTO_AUTO_ADJUST_KNOBS=1
+export DTO_WQ_LIST="wq0.1"
+export DTO_IS_NUMA_AWARE=1
+export LD_PRELOAD=/lib64/libdto.so.1.0
