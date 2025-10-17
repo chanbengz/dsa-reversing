@@ -1,10 +1,10 @@
 <div align=center>
 
-# DSASSASSIN: Cross-VM Side-Channel Attacks by Exploiting Intel Data Streaming Accelerator
+# DSAssassin: Cross-VM Side-Channel Attacks by Exploiting Intel Data Streaming Accelerator
 
 </div>
 
-This repos holds the artifact of paper "DSASSASSIN: Cross-VM Side-Channel Attacks by Exploiting Intel Data Streaming Accelerator".
+This repos holds the artifact of HPCA '26 paper "DSAssassin: Cross-VM Side-Channel Attacks by Exploiting Intel Data Streaming Accelerator".
 
 ## Structure
 
@@ -54,7 +54,7 @@ sudo apt install uuid-dev
 Clone this repo.
 
 ```bash
-git clone https://github.com/chanbengz/dsa-reversing.git --recurse-submodules
+git clone <url> --recurse-submodules
 ```
 
 Enable DSA with configuration (`sudo` required), and grant read/write priviledge to user.
