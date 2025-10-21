@@ -1,4 +1,7 @@
 #include "dsa.h"
+#include <linux/idxd.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 #define TESTS_PER_PROFILE 1
 #define BLEN (4096ull << 12)
@@ -9,6 +12,7 @@ struct dsa_completion_record arr_onbss = {};
 struct wq_info wq_info;
 struct dsa_hw_desc desc = {};
 void probe(void *);
+uint8_t *src, *dst;
 
 int map_another_wq(struct wq_info *wq_info) {
     int fd = open("/dev/dsa/wq0.1", O_RDWR);
@@ -29,14 +33,17 @@ int map_another_wq(struct wq_info *wq_info) {
 }
 
 int main(int argc, char *argv[]) {
+    src = malloc(BLEN), dst = malloc(BLEN);
     probe_arr = (struct dsa_completion_record *)aligned_alloc(32, BLEN);
+    memset(src, 0, BLEN >> 10);
+    memset(dst, 0, BLEN >> 10);
     memset(probe_arr, 0, BLEN >> 10);
 
     if (map_another_wq(&wq_info)) return EXIT_FAILURE;
     
     while (true) {
         probe(probe_arr);
-        nsleep(10000);
+        nsleep(5000);
     }
 
     return 0;
@@ -44,10 +51,14 @@ int main(int argc, char *argv[]) {
 
 void probe(void *addr) {
     uint64_t retry = 0, ret = 0;
+
     struct dsa_completion_record *comp = (struct dsa_completion_record *)addr;
     probe_arr[0].status = 0;
-    desc.opcode = DSA_OPCODE_NOOP;
+    desc.opcode = DSA_OPCODE_MEMMOVE;
     desc.flags = IDXD_OP_FLAG_CRAV | IDXD_OP_FLAG_RCR;
+    desc.src_addr = (uintptr_t) src;
+    desc.dst_addr = (uintptr_t) dst;
+    desc.xfer_size = 8;
     desc.completion_addr = (uintptr_t)comp;
     memset(comp, 0, 8);
 

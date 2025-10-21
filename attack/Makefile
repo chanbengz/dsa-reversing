@@ -28,6 +28,7 @@ debug: $(TARGET).c build
 build: $(TARGET).c
 	mkdir -p build
 	$(CC) $(TARGET).c -o build/$(TARGET) $(CFLAGS) $(LDFLAGS)
+	sudo setcap cap_sys_rawio+ep ./build/$(TARGET)
 
 clean:
 	rm -rf build

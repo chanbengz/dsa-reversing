@@ -5,9 +5,9 @@ import numpy as np
 transfer_sizes = [256, 1024, 4096, 16384, 65536, 262144, 1048576]
 # Throughput data - replace with your actual data
 cpu_throughput = [2.10,  3.13,  3.33,  4.27, 4.51, 9.07, 9.89]
-dsa_throughput = [3.45, 11.93, 29.88, 31.26, 30.79, 30.64, 30.59]
-dsa_mitigated  = [3.36, 11.79, 29.74, 31.21, 30.73, 30.56, 30.55]
-dto_mitigated  = [3.16, 11.61, 29.06, 30.77, 30.4, 30.78, 29.61]
+dsa_throughput = [4.18, 11.93, 29.88, 31.26, 30.79, 30.64, 30.59]
+dsa_mitigated  = [3.55, 11.79, 29.74, 31.21, 30.73, 30.56, 30.55]
+dto_mitigated  = [3.43, 11.61, 29.06, 30.77, 30.4, 30.78, 29.61]
 
 plt.rcParams['font.family'] = 'Optima'
 plt.figure(figsize=(8, 4))
