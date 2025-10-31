@@ -6,6 +6,8 @@ For real-world attacks, we opt for these attack scenarios:
 - [Spying on DTO-hooked LLM inference](#llm-inference)
 - [Covert channel](#covert-channel)
 
+Ensure Docker is installed and available on your system.
+
 ## DPDK
 
 0. Setup DSA
