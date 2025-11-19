@@ -4,6 +4,8 @@
 
 </div>
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17799273.svg)](https://doi.org/10.5281/zenodo.17799273)
+
 This repos holds the artifact of HPCA '26 paper "DSAssassin: Cross-VM Side-Channel Attacks by Exploiting Intel Data Streaming Accelerator".
 
 ## Structure
@@ -87,6 +89,20 @@ See [attack/README.md](attack/README.md) for attack experiments.
 ## Issues
 
 If you encounter any issue, please see [ISSUES.md](ISSUES.md) first. Open an issue if it doesn't help.
+
+## Citation
+
+Thanks for citing this paper/artifact!
+
+```plaintext
+@inproceedings{chen2026dsassassin,
+  title={DSAssassin: Cross-VM Side-Channel Attacks by Exploiting Intel Data Streaming Accelerator},
+  author={Chen, Ben and Li, Kunlin and Deng, Shuwen and Wang, Dongsheng and Chen, Yun},
+  booktitle={2026 IEEE International Symposium on High-Performance Computer Architecture (HPCA)},
+  year={2026},
+  organization={IEEE}
+}
+```
 
 ## Reference
 
