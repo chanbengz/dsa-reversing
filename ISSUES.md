@@ -38,10 +38,10 @@ You can try to set the CPU affinity of the DSA process to a single CPU core usin
 taskset -c <core_id> <your_dsa_process>
 ```
 
-To get the core ID, you can use `numactl -H` to list the available cores and their NUMA nodes.
-Normally, `dsa0` will locate on the numa node 0, and `dsa2` will locate on the numa node 1.
+To get the core ID, use `numactl -H` to list the available cores and their NUMA nodes.
+Normally, `dsa0` is located on the numa node 0, and `dsa2` will be on the numa node 1.
 
-However, it's unlikely that NUMA will cause the fluctuation of latency, as in our experiment setup.
+However, it's unlikely that NUMA would affect the calibration, as not observed in our experiment setup.
 
 ## Experiments Failed to Replicate with Expected Results
 

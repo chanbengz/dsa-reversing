@@ -86,7 +86,7 @@ See [attack/README.md](attack/README.md) for attack experiments.
 
 ## Issues
 
-If you encounter any issue, please see [ISSUES.md](ISSUES.md) first. Open an issue if it doesn't help.
+If you encounter any issue, please see [ISSUES.md](ISSUES.md) first. [Open an issue](https://github.com/chanbengz/dsa-reversing/issues/new) if it doesn't help.
 
 ## Reference
 
