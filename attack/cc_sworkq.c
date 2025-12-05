@@ -1,4 +1,5 @@
 #include "dsa.h"
+#include "cc.h"
 
 struct wq_info wq_info;
 struct dsa_hw_desc desc;

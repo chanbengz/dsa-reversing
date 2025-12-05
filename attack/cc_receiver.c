@@ -1,4 +1,5 @@
 #include "dsa.h"
+#include "cc.h"
 
 #define BLEN (4096 << 0)
 #define COMP_ARRAY_SIZE (4096 << 10)

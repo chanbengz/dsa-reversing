@@ -1,4 +1,5 @@
 #include "dsa.h"
+#include "cc.h"
 
 #define XFER_SIZE (1 << 28)
 #define WQ_SIZE 7

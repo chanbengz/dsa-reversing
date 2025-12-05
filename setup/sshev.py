@@ -3,7 +3,7 @@ import time
 import random
 
 # Configuration
-hostname = '172.17.0.3'
+hostname = 'ssh_server'
 username = 'root'
 password = '123456'
 KEYSTROKES = 512

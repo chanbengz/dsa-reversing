@@ -67,7 +67,7 @@ it means that the DSA is working and you can proceed to the next step.
 ```bash
 cd $(ROOTDIR)/attack
 make build TARGET=monitor
-./run_wf.sh
+./run_wf.sh web15 # or top100
 ```
 
 It takes approximately 5 hours to get traces of 15 websites. Be patient.
@@ -154,7 +154,6 @@ make libdto && cd ../
 Build the image
 
 ```bash
-cd ..
 docker build -t dto_dsa -f Dockerfile.dto .
 ```
 
@@ -256,7 +255,7 @@ Collect the data
 ```bash
 cd $(ROOTDIR)/attack
 make build TARGET=monitor
-./llm.sh
+./run_llm.sh
 ```
 
 ### Tuning
@@ -297,16 +296,9 @@ python3 covert.py -a atc -f eval
 This script also plots the results of multiple configurations, but for now we manually record the
 data and fill in the script with the results.
 
-To enable multithreading transmission, setup DSA at first, and then repeat above steps
-
-```bash
-cd $(ROOTDIR)/setup
-sudo ./setup_dsa.sh config/full.conf
-```
-
 ### Tuning
 
-For both covert channel, the general parameters are
+For both covert channel, the general parameters in `cc.h` are
 ```c
 #define BITS_REPEAT 1
 #define START_BITS 2

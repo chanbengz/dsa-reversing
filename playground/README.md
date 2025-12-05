@@ -46,10 +46,8 @@ Setup the DSA with
 
 ```bash
 cd $(ROOTDIR)/setup
-sudo ./setup_dsa.sh config/common.conf
-
 # For E0/E1 in Fig. 5
-sudo ./setup_dsa.sh config/one_engine.conf
+sudo ./setup_dsa.sh config/common.conf
 
 # For E2 in Fig. 5
 sudo ./setup_dsa.sh config/two_engines.conf
@@ -68,7 +66,7 @@ sudo perf stat -e dsa0/event=0x100,event_category=0x2/ -a ./build/rev
 | [readwrite.c](atc/readwrite.c) & [cmpval.c](atc/cmpval.c) | Listing 3. Primitive of `cmpval` with multiple addresses | Repeat `cmpval` (compare a src address with 8 bytes pattern) and `memcpy` (copy src to dst, read and write) | You can see 7 hits in `readwrite.c`, and the source has noted which line of descriptor causes the hits. Comment them to see the difference. `cmpval.c` tests the latency difference, which we found is no better than `noop`. |
 | [dualcast.c](atc/dualcast.c) & [overlapping.c](atc/overlapping.c) | Listing 4. Primitive of `dualcast` for testing multiple descriptor fields | Examined overlapping fields in descriptor (src2 and dst). `dualcast.c` issues two writes to dst and dst2, twice. `overlapping.c` executes `memcpy` (src, dst, comp) and `memcmp` (src, src2, comp) alternately | `dualcast.c` causes 4 hits (src, dst, dst2, comp), and `overlapping.c` causes 8 hits (2 + 3 + 3, denoted in source code) |
 | [crosspage.c](atc/crosspage.c) | Cross page behavior | Issued a cross-page `cmpval`, and then a following `cmpval` | If second probe is `probe(probe_arr + 16)`, 1 hit for completion record; if `probe(probe_arr + 4096)` (same as the last segment of previous), 2 hits are found |
-| [victim.c](atc/victim.c) & [evict.c](atc/evict.c) | Figure 5. Eviction of ATC entries | Examined cross process isolation by PASID. Run `victim` in one terminal and `evict` in another. Beware of the WQ-Engine setup in Figure 5. | For `one_engine.conf` (E0 and E1), `./build/evict 0` (same WQ) and `./build/evict 1` (different WQ) both cause eviction because victim shows an increase in latency. For `two_engines.conf` (E2), no eviction happened if `./build/evict 1`. |
+| [victim.c](atc/victim.c) & [evict.c](atc/evict.c) | Figure 5. Eviction of ATC entries | Examined cross process isolation by PASID. Run `victim` in one terminal and `evict` in another. Beware of the WQ-Engine setup in Figure 5. | For `common.conf` (E0 and E1), `./build/evict 0` (same WQ) and `./build/evict 1` (different WQ) both cause eviction because victim shows an increase in latency. For `two_engines.conf` (E2), no eviction happened if `./build/evict 1`. |
 | [batch.c](atc/batch.c) | Batch fetcher's usage of devTLB | Check DevTLB hits/evictions by batch descriptor. | Hits are `BATCH_SUBMIT * BATCH_SIZE - 1` because writes to completion record of batch descriptor and fetchs of work descriptor cause no eviction and hit. |
 | [offset.c](atc/offset.c) | Tweak bits in addresses to RE DevTLB | Change all bits one by one and measure the latency. | No latency variantion. |
 

@@ -5,10 +5,10 @@ DEPS = dsa.h
 SRCS = $(wildcard *.c)  
 EXES = $(patsubst %.c, %, $(SRCS))
 
-buildall: $(EXES)
+all: $(EXES)
+	sudo setcap cap_sys_rawio+ep ./build/*
 
-build: $(TARGET).c
-	mkdir -p build
+build: $(TARGET).c builddir
 	$(CC) $(TARGET).c -o build/$(TARGET) $(CFLAGS) $(LDFLAGS)
 	sudo setcap cap_sys_rawio+ep ./build/$(TARGET)
 
@@ -19,10 +19,13 @@ debug: $(TARGET).c
 	$(CC) $(TARGET).c -o build/$(TARGET) $(CFLAGS) $(LDFLAGS) -g
 	sudo gdb ./build/$(TARGET)
 
-$(EXES):%:%.c $(DEPS)
+$(EXES):%:%.c $(DEPS) builddir
 	$(CC) -o build/$@ $< $(CFLAGS) $(LDFLAGS)
+
+builddir:
+	mkdir -p build
 
 clean:
 	rm -rf build
 
-.PHONY: run clean build
+.PHONY: run clean build all builddir debug

@@ -47,25 +47,19 @@ If you didn't see output from the above commands, see [user guide](https://www.i
 Setup `accel-config / libaccel-config` and its dependencies.
 
 ```bash
-sudo apt install accel-config libaccel-config-dev libaccel-config1
-sudo apt install uuid-dev
-```
-
-Clone this repo.
-
-```bash
-git clone <url> --recurse-submodules
+sudo apt install accel-config libaccel-config-dev \
+     libaccel-config1 uuid-dev
 ```
 
 Enable DSA with configuration (`sudo` required), and grant read/write priviledge to user.
 
 ```bash
-export ROOTDIR=$(pwd)/dsa-reversing
-cd $ROOTDIR && chmod +x setup/*.sh
-sudo ./setup/setup_dsa.sh setup/config/some_config.conf
+export ROOTDIR=$(pwd) # dsa-reversing root directory
+cd $ROOTDIR/setup && chmod +x *.sh
+sudo ./setup_dsa.sh config/common.conf
 
 # or manually
-sudo accel-config load-config -c setup/config/some_config.conf -e
+sudo accel-config load-config -c setup/config/common.conf -e
 sudo chmod 766 /dev/dsa/*
 ```
 
@@ -74,7 +68,7 @@ sudo chmod 766 /dev/dsa/*
 `playground` holds the experiment sources. For example, in `playground/wq` you can find the source code of the workload queue (WQ) experiment.
 
 ```bash
-cd playground/wq && mkdir -p build # or playground/atc
+cd $ROOTDIR/playground/wq && mkdir -p build # or playground/atc
 make buildall
 ```
 

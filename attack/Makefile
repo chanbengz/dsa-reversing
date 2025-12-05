@@ -5,6 +5,9 @@ DEPS = dsa.h
 SRCS = $(wildcard *.c)  
 EXES = $(patsubst %.c, %, $(SRCS))
 
+all: $(EXES)
+	sudo setcap cap_sys_rawio+ep ./build/*
+
 covert:
 	mkdir -p build
 	$(CC) cc_sender.c -o build/cc_sender $(CFLAGS) $(LDFLAGS)
@@ -30,7 +33,13 @@ build: $(TARGET).c
 	$(CC) $(TARGET).c -o build/$(TARGET) $(CFLAGS) $(LDFLAGS)
 	sudo setcap cap_sys_rawio+ep ./build/$(TARGET)
 
+builddir:
+	mkdir -p build
+
+$(EXES):%:%.c $(DEPS) builddir
+	$(CC) -o build/$@ $< $(CFLAGS) $(LDFLAGS)
+
 clean:
 	rm -rf build
 
-.PHONY: run clean build covert
+.PHONY: run clean build covert builddir debug spy all
